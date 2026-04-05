@@ -110,6 +110,16 @@
             margin-left: 10px;
         }
 
+        .protected-badge {
+            display: inline-block;
+            background: #e74c3c;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.7em;
+            margin-left: 10px;
+        }
+
         @media (max-width: 600px) {
             .header h1 { font-size: 1.8em; }
             .tool-card h2 { font-size: 1.4em; }
@@ -128,28 +138,33 @@
 
         <div class="tools-section">
             <div class="tool-card">
-                <h2>🔬 EP26 Lot-to-Lot Verification Tool <span class="badge">CLSI EP26-Ed2 (2022)</span></h2>
+                <h2>🔬 EP26 Lot-to-Lot Verification Tool 
+                    <span class="badge">CLSI EP26-Ed2 (2022)</span>
+                    <span class="protected-badge">🔒 Password Protected</span>
+                </h2>
                 <p>
                     Complete implementation of CLSI EP26-Ed2 standard for lot-to-lot verification.
                     Features include automated CD/S_WRL calculations, rejection limits, sample size determination,
                     and power analysis. Includes supervisor and operator access levels.
                 </p>
-                <a href="EP26_LotToLot_Tool.html" class="tool-link">Launch Tool →</a>
+                <a href="EP26_LotToLot_Tool_secure.html" class="tool-link">Launch Tool →</a>
             </div>
 
             <div class="tool-card">
-                <h2>📈 BV-Based Reference Interval Calculator</h2>
+                <h2>📈 BV-Based Reference Interval Calculator
+                    <span class="protected-badge">🔒 Password Protected</span>
+                </h2>
                 <p>
                     Calculate biological variation-based reference intervals using within-subject and between-subject
                     CV data. Ideal for laboratory professionals establishing population-based reference ranges
                     with BV-derived precision goals.
                 </p>
-                <a href="bv-calculator.html" class="tool-link">Launch Tool →</a>
+                <a href="bv-calculator_secure.html" class="tool-link">Launch Tool →</a>
             </div>
         </div>
 
         <div class="footer">
-            <p>Both tools are fully functional HTML applications | No data is stored on servers | Free for laboratory use</p>
+            <p>🔒 Both tools are password protected | No data is stored on servers | Free for laboratory use</p>
             <p style="margin-top: 10px;">🔒 Secure • 📱 Responsive • 🚀 Fast</p>
         </div>
     </div>
