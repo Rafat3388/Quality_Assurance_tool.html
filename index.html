@@ -1,1290 +1,1100 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EP26 Lot-to-Lot Reagent Verification Tool</title>
-<style>
-  :root {
-    --primary: #1a3a5c;
-    --primary-light: #2a5a8c;
-    --accent: #0a8a6a;
-    --accent-light: #0db88e;
-    --danger: #c0392b;
-    --success: #27ae60;
-    --warning: #e67e22;
-    --bg: #f4f7fb;
-    --card: #ffffff;
-    --border: #d0dae8;
-    --text: #1e2d3d;
-    --muted: #6b7c93;
-    --tab-bg: #e8eef7;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BV Reference Interval Calculator - Portable</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-  /* LOGIN */
-  #loginScreen {
-    display: flex; align-items: center; justify-content: center;
-    min-height: 100vh; background: linear-gradient(135deg, var(--primary) 0%, #0d2340 100%);
-  }
-  .login-card {
-    background: white; border-radius: 12px; padding: 40px 44px; width: 380px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-  }
-  .login-logo { text-align: center; margin-bottom: 24px; }
-  .login-logo .title { font-size: 1.3rem; font-weight: 700; color: var(--primary); }
-  .login-logo .sub { font-size: 0.82rem; color: var(--muted); margin-top: 4px; }
-  .login-logo .ep { font-size: 2rem; font-weight: 800; color: var(--accent); }
-  .form-group { margin-bottom: 16px; }
-  .form-group label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .form-group input {
-    width: 100%; padding: 10px 14px; border: 1.5px solid var(--border);
-    border-radius: 7px; font-size: 0.95rem; color: var(--text);
-    transition: border-color 0.2s;
-  }
-  .form-group input:focus { outline: none; border-color: var(--primary-light); }
-  .btn-login {
-    width: 100%; padding: 12px; background: var(--primary); color: white;
-    border: none; border-radius: 7px; font-size: 1rem; font-weight: 600;
-    cursor: pointer; transition: background 0.2s; margin-top: 8px;
-  }
-  .btn-login:hover { background: var(--primary-light); }
-  .login-error { color: var(--danger); font-size: 0.85rem; margin-top: 10px; text-align: center; display: none; }
-  .login-footer { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 0.75rem; color: var(--muted); text-align: center; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
 
-  /* APP */
-  #appContainer { display: none; flex-direction: column; min-height: 100vh; }
-  header {
-    background: var(--primary); color: white; padding: 14px 28px;
-    display: flex; align-items: center; justify-content: space-between;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-  }
-  header .app-title { font-size: 1.1rem; font-weight: 700; }
-  header .app-sub { font-size: 0.78rem; opacity: 0.75; margin-top: 2px; }
-  header .user-info { display: flex; align-items: center; gap: 12px; }
-  header .user-badge {
-    background: rgba(255,255,255,0.15); border-radius: 20px;
-    padding: 4px 14px; font-size: 0.82rem;
-  }
-  header .role-badge {
-    background: var(--accent); border-radius: 20px;
-    padding: 4px 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
-  }
-  .btn-logout {
-    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
-    color: white; padding: 5px 14px; border-radius: 6px; cursor: pointer;
-    font-size: 0.82rem; transition: background 0.2s;
-  }
-  .btn-logout:hover { background: rgba(255,255,255,0.25); }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
 
-  /* TABS */
-  .tabs-bar {
-    background: var(--primary-light); display: flex; padding: 0 24px;
-  }
-  .tab-btn {
-    padding: 13px 22px; color: rgba(255,255,255,0.65); font-size: 0.9rem;
-    font-weight: 600; border: none; background: transparent; cursor: pointer;
-    border-bottom: 3px solid transparent; transition: all 0.2s;
-  }
-  .tab-btn:hover { color: white; }
-  .tab-btn.active { color: white; border-bottom-color: var(--accent-light); }
-  .tab-btn.disabled { opacity: 0.35; cursor: not-allowed; }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
 
-  /* CONTENT */
-  .tab-content { display: none; padding: 24px; flex: 1; }
-  .tab-content.active { display: block; }
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
 
-  .section-card {
-    background: var(--card); border-radius: 10px; border: 1px solid var(--border);
-    padding: 22px 24px; margin-bottom: 20px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-  }
-  .section-title {
-    font-size: 1rem; font-weight: 700; color: var(--primary);
-    margin-bottom: 14px; padding-bottom: 10px; border-bottom: 2px solid var(--tab-bg);
-    display: flex; align-items: center; gap: 8px;
-  }
-  .section-title .step-badge {
-    background: var(--primary); color: white; border-radius: 50%;
-    width: 24px; height: 24px; display: inline-flex; align-items: center;
-    justify-content: center; font-size: 0.78rem; font-weight: 700; flex-shrink: 0;
-  }
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
 
-  .info-box {
-    background: #eef4fb; border-left: 4px solid var(--primary-light);
-    border-radius: 6px; padding: 12px 16px; font-size: 0.85rem;
-    color: var(--text); margin-bottom: 16px; line-height: 1.6;
-  }
-  .info-box.accent { background: #eafaf5; border-left-color: var(--accent); }
-  .info-box.warn { background: #fef9ec; border-left-color: var(--warning); }
+        .content {
+            padding: 20px;
+        }
 
-  /* BUTTONS */
-  .btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 9px 18px; border-radius: 7px; font-size: 0.87rem;
-    font-weight: 600; border: none; cursor: pointer; transition: all 0.2s;
-    text-decoration: none;
-  }
-  .btn-primary { background: var(--primary); color: white; }
-  .btn-primary:hover { background: var(--primary-light); }
-  .btn-accent { background: var(--accent); color: white; }
-  .btn-accent:hover { background: var(--accent-light); }
-  .btn-outline { background: white; color: var(--primary); border: 1.5px solid var(--primary); }
-  .btn-outline:hover { background: var(--tab-bg); }
-  .btn-danger { background: var(--danger); color: white; }
-  .btn-sm { padding: 5px 12px; font-size: 0.8rem; }
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e0e0e0;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
 
-  /* TABLE */
-  .data-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
-  .data-table th {
-    background: var(--primary); color: white; padding: 9px 12px;
-    text-align: left; font-weight: 600; font-size: 0.8rem; text-transform: uppercase;
-    letter-spacing: 0.4px; white-space: nowrap;
-  }
-  .data-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-  .data-table tr:hover td { background: #f7faff; }
-  .data-table tr:last-child td { border-bottom: none; }
-  .data-table .pass { color: var(--success); font-weight: 700; }
-  .data-table .fail { color: var(--danger); font-weight: 700; }
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 16px;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
 
-  /* FORM GRID */
-  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
-  .field-group { display: flex; flex-direction: column; gap: 4px; }
-  .field-group label { font-size: 0.78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
-  .field-group input, .field-group select {
-    padding: 8px 11px; border: 1.5px solid var(--border); border-radius: 6px;
-    font-size: 0.88rem; color: var(--text); background: white;
-  }
-  .field-group input:focus, .field-group select:focus {
-    outline: none; border-color: var(--primary-light);
-    box-shadow: 0 0 0 3px rgba(42,90,140,0.1);
-  }
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            font-weight: 600;
+        }
 
-  /* STATUS */
-  .badge {
-    display: inline-block; padding: 3px 10px; border-radius: 20px;
-    font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
-  }
-  .badge-pass { background: #d4edda; color: #155724; }
-  .badge-fail { background: #f8d7da; color: #721c24; }
-  .badge-pending { background: #fff3cd; color: #856404; }
-  .badge-info { background: #cce5ff; color: #004085; }
+        .tab-content {
+            display: none;
+        }
 
-  /* RESULTS */
-  .result-summary {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-    color: white; border-radius: 10px; padding: 20px 24px; margin-bottom: 20px;
-  }
-  .result-summary h3 { font-size: 1rem; margin-bottom: 12px; opacity: 0.85; }
-  .result-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
-  .result-item { background: rgba(255,255,255,0.12); border-radius: 8px; padding: 12px 16px; }
-  .result-item .label { font-size: 0.75rem; opacity: 0.75; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.4px; }
-  .result-item .value { font-size: 1.4rem; font-weight: 700; }
-  .result-item .value.pass { color: #7dffbe; }
-  .result-item .value.fail { color: #ff7d7d; }
+        .tab-content.active {
+            display: block;
+        }
 
-  .file-upload-area {
-    border: 2px dashed var(--border); border-radius: 8px; padding: 24px;
-    text-align: center; cursor: pointer; transition: all 0.2s;
-    background: #f9fbff;
-  }
-  .file-upload-area:hover { border-color: var(--primary-light); background: #f0f5ff; }
-  .file-upload-area .upload-icon { font-size: 2.5rem; margin-bottom: 8px; }
-  .file-upload-area p { color: var(--muted); font-size: 0.88rem; }
+        .form-group {
+            margin-bottom: 15px;
+        }
 
-  .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+            font-size: 14px;
+        }
 
-  .analyte-levels-table { width: 100%; }
-  .level-row { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
-  .level-row input { flex: 1; }
-  .level-row .btn { flex-shrink: 0; }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
 
-  footer {
-    background: var(--primary); color: rgba(255,255,255,0.6);
-    text-align: center; padding: 12px; font-size: 0.75rem;
-  }
-  footer strong { color: white; }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
 
-  .scrollable { overflow-x: auto; }
-  .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); }
-  .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
 
-  .progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 6px; }
-  .progress-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.3s; }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
 
-  @media print {
-    header, .tabs-bar, .toolbar, footer, .btn { display: none !important; }
-    .tab-content { display: block !important; }
-    body { background: white; }
-  }
-</style>
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+
+        .result-box {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            border: 2px solid #667eea;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .result-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .result-value {
+            font-weight: 700;
+            color: #333;
+            font-size: 18px;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: flex;
+            align-items: start;
+            gap: 10px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+
+        .reference-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .reference-table th,
+        .reference-table td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        .reference-table th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+
+        .reference-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .value-input-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .value-input-row input {
+            flex: 1;
+        }
+
+        .value-input-row button {
+            padding: 10px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .values-container {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            border-top: 2px solid #e0e0e0;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .copyright {
+            font-weight: 700;
+            color: #667eea;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .content {
+                padding: 15px;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        .chart-container {
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            border: 2px solid #e0e0e0;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto !important;
+        }
+    </style>
 </head>
 <body>
-
-<!-- ============================== LOGIN SCREEN ============================== -->
-<div id="loginScreen">
-  <div class="login-card">
-    <div class="login-logo">
-      <div class="ep">EP26</div>
-      <div class="title">Lot-to-Lot Verification Tool</div>
-      <div class="sub">CLSI EP26 Ed.2 · 2022 Compliant</div>
-    </div>
-    <div class="form-group">
-      <label>Username</label>
-      <input type="text" id="loginUser" placeholder="Enter username" autocomplete="off">
-    </div>
-    <div class="form-group">
-      <label>Password</label>
-      <input type="password" id="loginPass" placeholder="Enter password">
-    </div>
-    <button class="btn-login" onclick="doLogin()">Sign In</button>
-    <div class="login-error" id="loginError">Invalid username or password.</div>
-    <div class="login-footer">
-      <strong>Dr. Raafat ElShimy</strong><br>
-      © 2024 EP26 Lot-to-Lot Tool. All rights reserved.<br>
-      Based on CLSI EP26-Ed2, April 2022
-    </div>
-  </div>
-</div>
-
-<!-- ============================== MAIN APP ============================== -->
-<div id="appContainer">
-  <header>
-    <div>
-      <div class="app-title">🔬 EP26 Reagent Lot-to-Lot Verification Tool</div>
-      <div class="app-sub">CLSI EP26 Ed.2 · 2022 | Author: Dr. Raafat ElShimy</div>
-    </div>
-    <div class="user-info">
-      <span class="user-badge" id="headerUser">—</span>
-      <span class="role-badge" id="headerRole">—</span>
-      <button class="btn-logout" onclick="doLogout()">Sign Out</button>
-    </div>
-  </header>
-
-  <div class="tabs-bar">
-    <button class="tab-btn" id="tab1btn" onclick="showTab(1)">📋 Tab 1 — Setup &amp; Protocol Parameters</button>
-    <button class="tab-btn active" id="tab2btn" onclick="showTab(2)">🧪 Tab 2 — Lot Evaluation</button>
-  </div>
-
-  <!-- ==================== TAB 1: SETUP ==================== -->
-  <div class="tab-content" id="tab1">
-
-    <div class="section-card">
-      <div class="section-title"><span class="step-badge">1</span> Protocol Setup — CLSI EP26 Stage 1</div>
-      <div class="info-box">
-        <strong>Purpose:</strong> This tab establishes the protocol parameters for each analyte (one-time setup). 
-        Enter analyte data, then the tool calculates the Rejection Limit (RL) and required sample size (N) 
-        by looking up the embedded CLSI EP26 Appendix A tables (A1, A2, A3) based on CD/S<sub>WRL</sub>, S<sub>r</sub>/S<sub>WRL</sub>, 
-        and desired statistical power. The output checklist is used for all future lot evaluations.
-      </div>
-    </div>
-
-    <!-- Step 1: Download template -->
-    <div class="section-card">
-      <div class="section-title"><span class="step-badge">2</span> Step 1: Download Input Template</div>
-      <p style="margin-bottom:14px; color:var(--muted); font-size:0.88rem;">
-        Download and complete the CSV template with your analyte parameters. 
-        Fill one row per analyte concentration level, then import it below.
-      </p>
-      <button class="btn btn-outline" onclick="downloadSetupTemplate()">⬇ Download Setup Template (CSV)</button>
-    </div>
-
-    <!-- Step 2: Manual entry or import -->
-    <div class="section-card">
-      <div class="section-title"><span class="step-badge">3</span> Step 2: Enter or Import Analyte Data</div>
-
-      <div class="toolbar">
-        <button class="btn btn-primary" onclick="addAnalyteRow()">＋ Add Analyte Level</button>
-        <label class="btn btn-outline" style="cursor:pointer;">
-          ⬆ Import CSV <input type="file" accept=".csv" id="setupFileInput" style="display:none" onchange="importSetupCSV(event)">
-        </label>
-        <button class="btn btn-outline" onclick="clearSetupTable()">🗑 Clear All</button>
-      </div>
-
-      <div class="info-box warn" style="font-size:0.82rem; margin-bottom:12px;">
-        <strong>Instructions:</strong>
-        <ul style="margin-top:6px; padding-left:18px; line-height:1.8;">
-          <li><strong>CD</strong>: Critical Difference (absolute units or %TEa-based, same units as S<sub>WRL</sub>)</li>
-          <li><strong>S<sub>WRL</sub></strong>: Within-Reagent-Lot imprecision (total, SD)</li>
-          <li><strong>S<sub>r</sub></strong>: Repeatability / within-run SD</li>
-          <li><strong>Levels</strong>: Number of medical decision concentrations being tested (1, 2, or 3 → selects Table A1, A2, A3)</li>
-          <li><strong>Power Goal</strong>: Desired statistical power (0.80, 0.85, 0.90, or 0.95)</li>
-        </ul>
-      </div>
-
-      <div class="scrollable">
-        <table class="data-table" id="setupTable">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Analyte</th>
-              <th>Conc. Level Label</th>
-              <th>Target Conc.</th>
-              <th>Units</th>
-              <th>CD</th>
-              <th>S<sub>WRL</sub></th>
-              <th>S<sub>r</sub></th>
-              <th>No. of Levels</th>
-              <th>Power Goal</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody id="setupTableBody">
-          </tbody>
-        </table>
-      </div>
-      <div id="setupEmpty" class="empty-state">
-        <div class="icon">📊</div>
-        <p>No analyte data entered yet. Click "Add Analyte Level" or import a CSV file.</p>
-      </div>
-    </div>
-
-    <!-- Step 3: Calculate -->
-    <div class="section-card">
-      <div class="section-title"><span class="step-badge">4</span> Step 3: Calculate Protocol Parameters</div>
-      <div class="info-box accent" style="font-size:0.82rem;">
-        Calculations use the embedded CLSI EP26 Appendix A tables. The tool computes CD/S<sub>WRL</sub> and 
-        S<sub>r</sub>/S<sub>WRL</sub> ratios, selects the appropriate table (A1 for 1 level, A2 for 2, A3 for 3), 
-        and returns: Rejection Limit (RL) = k × CD, Number of Samples (N), and achieved Power.
-      </div>
-      <div class="toolbar">
-        <button class="btn btn-accent" onclick="calculateParameters()">⚡ Calculate All Parameters</button>
-        <button class="btn btn-outline" onclick="downloadChecklist()">⬇ Download Checklist (CSV)</button>
-        <button class="btn btn-outline" onclick="printChecklist()">🖨 Print Checklist</button>
-      </div>
-
-      <div id="checklistOutput" style="display:none;">
-        <div class="scrollable">
-          <table class="data-table" id="checklistTable">
-            <thead>
-              <tr>
-                <th>Analyte</th>
-                <th>Level</th>
-                <th>Target Conc.</th>
-                <th>Units</th>
-                <th>CD</th>
-                <th>CD/S<sub>WRL</sub></th>
-                <th>S<sub>r</sub>/S<sub>WRL</sub></th>
-                <th>Table Used</th>
-                <th>Samples (N)</th>
-                <th>RL (k×CD)</th>
-                <th>RL Value</th>
-                <th>Power Achieved</th>
-              </tr>
-            </thead>
-            <tbody id="checklistBody"></tbody>
-          </table>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 BV-Based Reference Interval Calculator</h1>
+            <p>Dr. Coşkun's Method - Clinical Chemistry & Laboratory Medicine</p>
+            <p style="font-size: 12px; margin-top: 10px;">Portable Version - Works Offline on Any Device</p>
         </div>
-      </div>
-      <div id="checklistEmpty" class="empty-state">
-        <div class="icon">🧮</div>
-        <p>Click "Calculate All Parameters" after entering analyte data above.</p>
-      </div>
-    </div>
 
-  </div><!-- end tab1 -->
+        <div class="content">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('calculator')">Calculator</button>
+                <button class="tab" onclick="switchTab('results')">Results</button>
+                <button class="tab" onclick="switchTab('report')">Report</button>
+                <button class="tab" onclick="switchTab('database')">BV Database</button>
+                <button class="tab" onclick="switchTab('help')">Help</button>
+            </div>
 
-  <!-- ==================== TAB 2: EVALUATION ==================== -->
-  <div class="tab-content active" id="tab2">
+            <!-- Calculator Tab -->
+            <div id="calculator" class="tab-content active">
+                <h2 style="margin-bottom: 20px; color: #667eea;">📊 Analyte Configuration</h2>
+                
+                <div class="grid">
+                    <div class="form-group">
+                        <label>Analyte Name</label>
+                        <input type="text" id="analyteName" placeholder="e.g., Glucose" value="Glucose">
+                    </div>
+                    <div class="form-group">
+                        <label>Unit</label>
+                        <input type="text" id="unit" placeholder="e.g., mg/dL" value="mg/dL">
+                    </div>
+                    <div class="form-group">
+                        <label>Distribution Type</label>
+                        <select id="distribution">
+                            <option value="normal">Normal</option>
+                            <option value="log-normal">Log-Normal</option>
+                        </select>
+                    </div>
+                </div>
 
-    <div class="section-card">
-      <div class="section-title"><span class="step-badge">1</span> Lot Evaluation — CLSI EP26 Stage 2</div>
-      <div class="info-box accent">
-        <strong>Purpose:</strong> Enter measured results from the current and candidate reagent lots. 
-        The tool calculates the mean difference for each analyte concentration level and compares it 
-        against the Rejection Limit (RL). A pass/fail conclusion is generated for each level and analyte.
-      </div>
-    </div>
+                <h3 style="margin: 20px 0 10px; color: #667eea;">🔬 Biological Variation Data (%)</h3>
+                <div class="grid">
+                    <div class="form-group">
+                        <label>Within-Subject CV (CV<sub>I</sub>)</label>
+                        <input type="number" id="cvi" step="0.1" placeholder="e.g., 5.7" value="5.7">
+                    </div>
+                    <div class="form-group">
+                        <label>Between-Subject CV (CV<sub>G</sub>)</label>
+                        <input type="number" id="cvg" step="0.1" placeholder="e.g., 6.3" value="6.3">
+                    </div>
+                    <div class="form-group">
+                        <label>Analytical CV (CV<sub>A</sub>)</label>
+                        <input type="number" id="cva" step="0.1" placeholder="e.g., 2.1" value="2.1">
+                    </div>
+                </div>
 
-    <!-- Load protocol -->
-    <div class="section-card">
-      <div class="section-title"><span class="step-badge">2</span> Step 1: Load Protocol Parameters</div>
-      <p style="margin-bottom:14px; color:var(--muted); font-size:0.88rem;">
-        Load the checklist generated in Tab 1, or manually define analytes and their parameters for this evaluation.
-      </p>
-      <div class="toolbar">
-        <button class="btn btn-primary" onclick="loadFromTab1()">📋 Load from Tab 1 Checklist</button>
-        <label class="btn btn-outline" style="cursor:pointer;">
-          ⬆ Import Checklist CSV <input type="file" accept=".csv" id="evalLoadInput" style="display:none" onchange="importEvalProtocol(event)">
-        </label>
-        <button class="btn btn-outline" onclick="downloadEvalTemplate()">⬇ Download Evaluation Template</button>
-      </div>
+                <h3 style="margin: 20px 0 10px; color: #667eea;">📈 Reference Values</h3>
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="addValueInput()">+ Add Value</button>
+                    <button class="btn btn-secondary" onclick="document.getElementById('fileInput').click()">📁 Import CSV</button>
+                    <button class="btn btn-warning" onclick="clearValues()">🗑️ Clear All</button>
+                </div>
+                <input type="file" id="fileInput" accept=".csv,.txt" style="display: none;" onchange="importCSV(event)">
 
-      <!-- Protocol summary -->
-      <div id="protocolSummary" style="display:none; margin-top:16px;">
-        <div class="scrollable">
-          <table class="data-table" id="protocolTable">
-            <thead>
-              <tr>
-                <th>Analyte</th>
-                <th>Level</th>
-                <th>Target Conc.</th>
-                <th>Units</th>
-                <th>N Required</th>
-                <th>RL</th>
-                <th>RL Value</th>
-                <th>Power</th>
-              </tr>
-            </thead>
-            <tbody id="protocolBody"></tbody>
-          </table>
+                <div id="valuesContainer" class="values-container"></div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="calculate()" style="font-size: 16px;">🧮 Calculate Reference Interval</button>
+                </div>
+            </div>
+
+            <!-- Results Tab -->
+            <div id="results" class="tab-content">
+                <h2 style="margin-bottom: 20px; color: #667eea;">📊 Calculation Results</h2>
+                <div id="resultsContent">
+                    <div class="alert alert-info">
+                        <span>ℹ️</span>
+                        <span>Configure your analyte and calculate to see results here.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report Tab -->
+            <div id="report" class="tab-content">
+                <h2 style="margin-bottom: 20px; color: #667eea;">📄 Comprehensive Report</h2>
+                <div class="btn-group">
+                    <button class="btn btn-success" onclick="exportReport()">💾 Download Report (TXT)</button>
+                    <button class="btn btn-success" onclick="exportCSV()">📊 Download CSV</button>
+                    <button class="btn btn-primary" onclick="printReport()">🖨️ Print Report</button>
+                </div>
+                <div id="reportContent" style="white-space: pre-wrap; font-family: monospace; background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px;">
+                    No data available. Please calculate reference intervals first.
+                </div>
+            </div>
+
+            <!-- BV Database Tab -->
+            <div id="database" class="tab-content">
+                <h2 style="margin-bottom: 20px; color: #667eea;">🗄️ Common Biological Variation Values</h2>
+                <p style="margin-bottom: 15px;">Quick reference for common analytes. Click to auto-fill.</p>
+                <table class="reference-table">
+                    <thead>
+                        <tr>
+                            <th>Analyte</th>
+                            <th>CV<sub>I</sub> (%)</th>
+                            <th>CV<sub>G</sub> (%)</th>
+                            <th>CV<sub>A</sub> (%)</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Glucose</td>
+                            <td>5.7</td>
+                            <td>6.3</td>
+                            <td>2.1</td>
+                            <td><button class="btn btn-primary" onclick="loadBVData('Glucose', 5.7, 6.3, 2.1, 'mg/dL')">Load</button></td>
+                        </tr>
+                        <tr>
+                            <td>Creatinine</td>
+                            <td>4.3</td>
+                            <td>13.3</td>
+                            <td>3.5</td>
+                            <td><button class="btn btn-primary" onclick="loadBVData('Creatinine', 4.3, 13.3, 3.5, 'mg/dL')">Load</button></td>
+                        </tr>
+                        <tr>
+                            <td>Cholesterol</td>
+                            <td>6.0</td>
+                            <td>15.0</td>
+                            <td>3.0</td>
+                            <td><button class="btn btn-primary" onclick="loadBVData('Cholesterol', 6.0, 15.0, 3.0, 'mg/dL')">Load</button></td>
+                        </tr>
+                        <tr>
+                            <td>Hemoglobin</td>
+                            <td>2.5</td>
+                            <td>6.3</td>
+                            <td>2.0</td>
+                            <td><button class="btn btn-primary" onclick="loadBVData('Hemoglobin', 2.5, 6.3, 2.0, 'g/dL')">Load</button></td>
+                        </tr>
+                        <tr>
+                            <td>Albumin</td>
+                            <td>2.8</td>
+                            <td>4.2</td>
+                            <td>2.5</td>
+                            <td><button class="btn btn-primary" onclick="loadBVData('Albumin', 2.8, 4.2, 2.5, 'g/dL')">Load</button></td>
+                        </tr>
+                        <tr>
+                            <td>ALT</td>
+                            <td>15.7</td>
+                            <td>42.1</td>
+                            <td>5.0</td>
+                            <td><button class="btn btn-primary" onclick="loadBVData('ALT', 15.7, 42.1, 5.0, 'IU/L')">Load</button></td>
+                        </tr>
+                        <tr>
+                            <td>TSH</td>
+                            <td>16.0</td>
+                            <td>39.0</td>
+                            <td>4.5</td>
+                            <td><button class="btn btn-primary" onclick="loadBVData('TSH', 16.0, 39.0, 4.5, 'mIU/L')">Load</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="alert alert-info" style="margin-top: 20px;">
+                    <span>ℹ️</span>
+                    <span>Data source: EFLM Biological Variation Database (https://biologicalvariation.eu/)</span>
+                </div>
+            </div>
+
+            <!-- Help Tab -->
+            <div id="help" class="tab-content">
+                <h2 style="margin-bottom: 20px; color: #667eea;">❓ How to Use</h2>
+                
+                <div style="line-height: 1.8;">
+                    <h3 style="color: #667eea; margin: 20px 0 10px;">📋 Step-by-Step Guide:</h3>
+                    <ol style="margin-left: 20px;">
+                        <li><strong>Enter Analyte Information:</strong> Name, unit, and distribution type</li>
+                        <li><strong>Input Biological Variation Data:</strong> Get values from EFLM database or use the BV Database tab</li>
+                        <li><strong>Add Reference Values:</strong> Click "+ Add Value" or import from CSV file</li>
+                        <li><strong>Calculate:</strong> Click "Calculate Reference Interval" button</li>
+                        <li><strong>View Results:</strong> Switch to Results tab to see calculations</li>
+                        <li><strong>Generate Report:</strong> Go to Report tab to download or print</li>
+                    </ol>
+
+                    <h3 style="color: #667eea; margin: 20px 0 10px;">💡 Tips:</h3>
+                    <ul style="margin-left: 20px;">
+                        <li>Minimum 6 reference values required (16+ recommended)</li>
+                        <li>Use validated BV data from EFLM database</li>
+                        <li>This tool works completely offline - save the HTML file</li>
+                        <li>Data is saved in your browser automatically</li>
+                        <li>Works on PC, tablet, and mobile devices</li>
+                    </ul>
+
+                    <h3 style="color: #667eea; margin: 20px 0 10px;">📚 Method Reference:</h3>
+                    <p>Coşkun A, Sandberg S, Unsal I, Topcu DI, Aarsand AK. Reference Intervals Revisited: A Novel Model for Population-Based Reference Intervals, Using a Small Sample Size and Biological Variation Data. Clinical Chemistry 2024;70(10):1279-1290.</p>
+
+                    <h3 style="color: #667eea; margin: 20px 0 10px;">🔄 Offline Use:</h3>
+                    <p>Save this HTML file to your computer or mobile device. It will work without internet connection. All calculations are performed locally in your browser.</p>
+                </div>
+            </div>
         </div>
-      </div>
-      <div id="protocolEmpty" class="empty-state">
-        <div class="icon">📋</div>
-        <p>No protocol loaded. Load from Tab 1 or import a checklist CSV.</p>
-      </div>
+
+        <div class="footer">
+            <p>BV-Based Reference Interval Calculator | Portable Version v1.0</p>
+            <p>Based on: Coşkun et al., Clinical Chemistry 2024;70(10):1279-1290</p>
+            <p>Data sources: EFLM Biological Variation Database</p>
+            <p class="copyright">© Copyright 2024 Raafat ElShimy. All rights reserved.</p>
+        </div>
     </div>
 
-    <!-- Data entry -->
-    <div class="section-card">
-      <div class="section-title"><span class="step-badge">3</span> Step 2: Enter Measurement Results</div>
-      <div class="info-box" style="font-size:0.82rem;">
-        Enter paired measurements for each sample: the result from the <strong>Current Lot</strong> and 
-        the result from the <strong>Candidate Lot</strong>. Difference = Candidate − Current.
-        Minimum samples per level as specified in the protocol (N required).
-      </div>
+    <script>
+        // Initialize with some sample values
+        let referenceValues = [];
+        let calculatedResults = null;
 
-      <div id="dataEntryContainer">
-        <div class="empty-state">
-          <div class="icon">🧪</div>
-          <p>Load protocol parameters first (Step 1 above).</p>
-        </div>
-      </div>
-    </div>
+        // Load saved data on start
+        window.onload = function() {
+            loadFromStorage();
+            if (referenceValues.length === 0) {
+                addValueInput();
+                addValueInput();
+                addValueInput();
+            } else {
+                renderValues();
+            }
+        };
 
-    <!-- Results -->
-    <div class="section-card">
-      <div class="section-title"><span class="step-badge">4</span> Step 3: Evaluation Results &amp; Conclusion</div>
-      <div class="toolbar">
-        <button class="btn btn-accent" onclick="calculateEvaluation()">⚡ Calculate &amp; Evaluate</button>
-        <button class="btn btn-outline" onclick="downloadResults()">⬇ Download Results (CSV)</button>
-        <button class="btn btn-outline" onclick="printResults()">🖨 Print Report</button>
-      </div>
-
-      <div id="evalResults" style="display:none;">
-        <div class="result-summary" id="summaryBanner">
-          <h3>Overall Evaluation Summary</h3>
-          <div class="result-grid" id="summaryGrid"></div>
-        </div>
-        <div class="scrollable">
-          <table class="data-table" id="resultsTable">
-            <thead>
-              <tr>
-                <th>Analyte</th>
-                <th>Level</th>
-                <th>Target Conc.</th>
-                <th>N Tested</th>
-                <th>Mean Difference</th>
-                <th>|Mean Diff|</th>
-                <th>RL (k×CD)</th>
-                <th>RL Value</th>
-                <th>CD</th>
-                <th>Conclusion</th>
-              </tr>
-            </thead>
-            <tbody id="resultsBody"></tbody>
-          </table>
-        </div>
-      </div>
-      <div id="evalEmpty" class="empty-state">
-        <div class="icon">📈</div>
-        <p>Enter data and click "Calculate &amp; Evaluate" to see results.</p>
-      </div>
-    </div>
-
-  </div><!-- end tab2 -->
-
-  <footer>
-    <strong>© 2024 Dr. Raafat ElShimy</strong> · EP26 Lot-to-Lot Reagent Verification Tool · 
-    Based on CLSI EP26-Ed2 (April 2022) · All rights reserved. Unauthorized reproduction prohibited.
-  </footer>
-</div><!-- end appContainer -->
-
-<script>
-// ============================================================
-// USER ACCOUNTS
-// ============================================================
-const USERS = {
-  supervisor: { password: 'super123', role: 'Supervisor', canTab1: true },
-  operator: { password: 'lab456', role: 'Lab Technician', canTab1: false },
-  admin: { password: 'admin2024', role: 'Supervisor', canTab1: true },
-  labtech: { password: 'tech789', role: 'Lab Technician', canTab1: false }
-};
-
-let currentUser = null;
-let setupRows = [];
-let checklistData = [];
-let protocolData = [];
-let evalDataEntries = {};
-
-// ============================================================
-// LOGIN / LOGOUT
-// ============================================================
-function doLogin() {
-  const u = document.getElementById('loginUser').value.trim().toLowerCase();
-  const p = document.getElementById('loginPass').value;
-  const err = document.getElementById('loginError');
-  if (USERS[u] && USERS[u].password === p) {
-    currentUser = { username: u, ...USERS[u] };
-    err.style.display = 'none';
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('appContainer').style.display = 'flex';
-    document.getElementById('headerUser').textContent = u;
-    document.getElementById('headerRole').textContent = currentUser.role;
-    // Tab permissions
-    const t1 = document.getElementById('tab1btn');
-    if (!currentUser.canTab1) {
-      t1.classList.add('disabled');
-      t1.title = 'Access restricted to Supervisors';
-      showTab(2);
-    } else {
-      t1.classList.remove('disabled');
-      showTab(1);
-    }
-  } else {
-    err.style.display = 'block';
-  }
-}
-
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && document.getElementById('loginScreen').style.display !== 'none') doLogin();
-});
-
-function doLogout() {
-  currentUser = null;
-  document.getElementById('loginScreen').style.display = 'flex';
-  document.getElementById('appContainer').style.display = 'none';
-  document.getElementById('loginUser').value = '';
-  document.getElementById('loginPass').value = '';
-}
-
-function showTab(n) {
-  if (n === 1 && currentUser && !currentUser.canTab1) return;
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
-  document.getElementById('tab' + n).classList.add('active');
-  document.getElementById('tab' + n + 'btn').classList.add('active');
-}
-
-// ============================================================
-// CLSI EP26 APPENDIX A TABLES (embedded)
-// Format: [CD_SWRL, Sr_SWRL, {rl: [k, power, N], ...}]
-// RLs: 0.90, 0.80, 0.70, 0.60, 0.55
-// ============================================================
-
-// TABLE A1 (1 decision concentration, alpha=0.05)
-const TABLE_A1 = [
-  // [CD_SWRL, Sr_SWRL, [[k, power, N], ...]] sorted by k ascending (tighter RL)
-  [1.0, 1.00, [[0.90,0.588,10],[0.80,0.695,13],[0.70,0.802,16],[0.60,0.908,22],[0.55,0.948,26]]],
-  [1.0, 0.95, [[0.90,0.586,114]]],
-  [1.5, 1.00, [[0.90,0.594,5],[0.80,0.698,6],[0.70,0.800,7],[0.60,0.910,10],[0.55,0.951,12]]],
-  [1.5, 0.95, [[0.90,0.588,7],[0.80,0.692,11],[0.70,0.800,20],[0.60,0.904,114]]],
-  [1.5, 0.90, [[0.90,0.587,18]]],
-  [2.0, 1.00, [[0.90,0.597,3],[0.80,0.714,4],[0.70,0.802,4],[0.60,0.917,6],[0.55,0.954,7]]],
-  [2.0, 0.95, [[0.90,0.589,3],[0.80,0.691,4],[0.70,0.803,6],[0.60,0.909,11],[0.55,0.948,16]]],
-  [2.0, 0.90, [[0.90,0.589,4],[0.80,0.690,6],[0.70,0.801,13]]],
-  [2.0, 0.85, [[0.90,0.589,6],[0.80,0.688,13]]],
-  [2.0, 0.80, [[0.90,0.587,11]]],
-  [2.5, 1.00, [[0.90,0.599,2],[0.80,0.691,2],[0.70,0.821,3],[0.60,0.921,4],[0.55,0.962,5]]],
-  [2.5, 0.95, [[0.90,0.594,2],[0.80,0.712,3],[0.70,0.800,3],[0.60,0.910,5],[0.55,0.953,7]]],
-  [2.5, 0.90, [[0.90,0.591,2],[0.80,0.699,3],[0.70,0.801,4],[0.60,0.905,8],[0.55,0.946,15]]],
-  [2.5, 0.85, [[0.90,0.588,2],[0.80,0.688,3],[0.70,0.800,6],[0.60,0.904,48]]],
-  [2.5, 0.80, [[0.90,0.592,3],[0.80,0.688,4],[0.70,0.800,17]]],
-  [2.5, 0.75, [[0.90,0.588,3],[0.80,0.688,7]]],
-  [2.5, 0.70, [[0.90,0.588,4],[0.80,0.688,47]]],
-  [2.5, 0.60, [[0.90,0.586,20]]],
-  [3.0, 1.00, [[0.90,0.618,2],[0.80,0.726,2],[0.70,0.816,2],[0.60,0.929,3],[0.55,0.951,4]]],
-  [3.0, 0.95, [[0.90,0.613,2],[0.80,0.717,2],[0.70,0.805,2],[0.60,0.911,3],[0.55,0.953,3]]],
-  [3.0, 0.90, [[0.90,0.608,2],[0.80,0.709,2],[0.70,0.826,3],[0.60,0.912,4],[0.55,0.946,5]]],
-  [3.0, 0.85, [[0.90,0.605,2],[0.80,0.702,2],[0.70,0.812,3],[0.60,0.911,6],[0.55,0.947,10]]],
-  [3.0, 0.80, [[0.90,0.602,2],[0.80,0.697,2],[0.70,0.800,3],[0.60,0.905,11]]],
-  [3.0, 0.75, [[0.90,0.599,2],[0.80,0.692,2],[0.70,0.805,5]]],
-  [3.0, 0.70, [[0.90,0.596,2],[0.80,0.697,3],[0.70,0.800,8]]],
-  [3.0, 0.60, [[0.90,0.593,2],[0.80,0.690,4]]],
-  [3.0, 0.50, [[0.90,0.590,2]]],
-  [3.0, 0.40, [[0.90,0.588,2]]],
-  [3.0, 0.30, [[0.90,0.587,3]]],
-  [3.5, 1.00, [[0.90,0.598,1],[0.80,0.690,1],[0.70,0.853,2],[0.60,0.919,2],[0.55,0.973,3]]],
-  [3.5, 0.95, [[0.90,0.598,1],[0.80,0.690,1],[0.70,0.842,2],[0.60,0.909,2],[0.55,0.961,3]]],
-  [3.5, 0.90, [[0.90,0.598,1],[0.80,0.690,1],[0.70,0.832,2],[0.60,0.928,3],[0.55,0.950,3]]],
-  [3.5, 0.85, [[0.90,0.598,1],[0.80,0.690,1],[0.70,0.824,2],[0.60,0.915,3],[0.55,0.950,4]]],
-  [3.5, 0.80, [[0.90,0.598,1],[0.80,0.690,1],[0.70,0.816,2],[0.60,0.904,3],[0.55,0.948,6]]],
-  [3.5, 0.75, [[0.90,0.598,1],[0.80,0.690,1],[0.70,0.809,2],[0.60,0.909,5],[0.55,0.946,13]]],
-  [3.5, 0.70, [[0.90,0.598,1],[0.80,0.690,1],[0.70,0.804,2],[0.60,0.905,8]]],
-  [3.5, 0.60, [[0.90,0.598,1],[0.80,0.690,1],[0.70,0.803,3]]],
-  [3.5, 0.50, [[0.90,0.598,1],[0.80,0.690,1],[0.70,0.800,8]]],
-  [3.5, 0.40, [[0.90,0.598,1],[0.80,0.690,1]]],
-  [3.5, 0.30, [[0.90,0.598,1],[0.80,0.690,1]]],
-  [4.0, 1.00, [[0.90,0.611,1],[0.80,0.714,1],[0.70,0.802,1],[0.60,0.945,2],[0.55,0.964,2]]],
-  [4.0, 0.95, [[0.90,0.611,1],[0.80,0.714,1],[0.70,0.802,1],[0.60,0.937,2],[0.55,0.957,2]]],
-  [4.0, 0.90, [[0.90,0.611,1],[0.80,0.714,1],[0.70,0.802,1],[0.60,0.929,2],[0.55,0.951,2]]],
-  [4.0, 0.85, [[0.90,0.611,1],[0.80,0.714,1],[0.70,0.802,1],[0.60,0.922,2],[0.55,0.961,3]]],
-  [4.0, 0.80, [[0.90,0.611,1],[0.80,0.714,1],[0.70,0.802,1],[0.60,0.915,2],[0.55,0.954,3]]],
-  [4.0, 0.75, [[0.90,0.611,1],[0.80,0.714,1],[0.70,0.802,1],[0.60,0.909,2],[0.55,0.946,3]]],
-  [4.0, 0.70, [[0.90,0.611,1],[0.80,0.714,1],[0.70,0.802,1],[0.60,0.916,3],[0.55,0.949,5]]],
-  [4.0, 0.60, [[0.90,0.611,1],[0.80,0.714,1],[0.70,0.802,1],[0.60,0.907,4]]],
-  [4.0, 0.50, [[0.90,0.611,1],[0.80,0.714,1],[0.70,0.802,1]]],
-  [4.0, 0.40, [[0.90,0.611,1],[0.80,0.714,1],[0.70,0.802,1]]],
-  [4.0, 0.30, [[0.90,0.611,1],[0.80,0.714,1],[0.70,0.802,1]]],
-  [4.5, 1.00, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.830,1],[0.60,0.964,2],[0.55,0.979,2]]],
-  [4.5, 0.95, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.830,1],[0.60,0.957,2],[0.55,0.973,2]]],
-  [4.5, 0.90, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.830,1],[0.60,0.951,2],[0.55,0.968,2]]],
-  [4.5, 0.85, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.830,1],[0.60,0.944,2],[0.55,0.963,2]]],
-  [4.5, 0.80, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.830,1],[0.60,0.939,2],[0.55,0.959,2]]],
-  [4.5, 0.75, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.830,1],[0.60,0.933,2],[0.55,0.954,2]]],
-  [4.5, 0.70, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.830,1],[0.60,0.929,2],[0.55,0.950,2]]],
-  [4.5, 0.60, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.830,1],[0.60,0.920,2],[0.55,0.950,3]]],
-  [4.5, 0.50, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.830,1],[0.60,0.913,2],[0.55,0.946,6]]],
-  [4.5, 0.40, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.830,1],[0.60,0.908,2]]],
-  [4.5, 0.30, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.830,1],[0.60,0.905,3]]],
-  [5.0, 1.00, [[0.90,0.638,1],[0.80,0.760,1],[0.70,0.856,1],[0.60,0.921,1],[0.55,0.988,2]]],
-  [5.0, 0.95, [[0.90,0.638,1],[0.80,0.760,1],[0.70,0.856,1],[0.60,0.921,1],[0.55,0.984,2]]],
-  [5.0, 0.90, [[0.90,0.638,1],[0.80,0.760,1],[0.70,0.856,1],[0.60,0.921,1],[0.55,0.980,2]]],
-  [5.0, 0.85, [[0.90,0.638,1],[0.80,0.760,1],[0.70,0.856,1],[0.60,0.921,1],[0.55,0.977,2]]],
-  [5.0, 0.80, [[0.90,0.638,1],[0.80,0.760,1],[0.70,0.856,1],[0.60,0.921,1],[0.55,0.973,2]]],
-  [5.0, 0.75, [[0.90,0.638,1],[0.80,0.760,1],[0.70,0.856,1],[0.60,0.921,1],[0.55,0.970,2]]],
-  [5.0, 0.70, [[0.90,0.638,1],[0.80,0.760,1],[0.70,0.856,1],[0.60,0.921,1],[0.55,0.966,2]]],
-  [5.0, 0.60, [[0.90,0.638,1],[0.80,0.760,1],[0.70,0.856,1],[0.60,0.921,1],[0.55,0.961,2]]],
-  [5.0, 0.50, [[0.90,0.638,1],[0.80,0.760,1],[0.70,0.856,1],[0.60,0.921,1],[0.55,0.956,2]]],
-  [5.0, 0.40, [[0.90,0.638,1],[0.80,0.760,1],[0.70,0.856,1],[0.60,0.921,1],[0.55,0.951,2]]],
-  [5.0, 0.30, [[0.90,0.638,1],[0.80,0.760,1],[0.70,0.856,1],[0.60,0.921,1],[0.55,0.948,2]]],
-  [5.5, 1.00, [[0.90,0.651,1],[0.80,0.782,1],[0.70,0.878,1],[0.60,0.940,1],[0.55,0.960,1]]],
-  [5.5, 0.95, [[0.90,0.651,1],[0.80,0.782,1],[0.70,0.878,1],[0.60,0.940,1],[0.55,0.960,1]]],
-  [5.5, 0.90, [[0.90,0.651,1],[0.80,0.782,1],[0.70,0.878,1],[0.60,0.940,1],[0.55,0.960,1]]],
-  [5.5, 0.85, [[0.90,0.651,1],[0.80,0.782,1],[0.70,0.878,1],[0.60,0.940,1],[0.55,0.960,1]]],
-  [5.5, 0.80, [[0.90,0.651,1],[0.80,0.782,1],[0.70,0.878,1],[0.60,0.940,1],[0.55,0.960,1]]],
-  [5.5, 0.70, [[0.90,0.651,1],[0.80,0.782,1],[0.70,0.878,1],[0.60,0.940,1],[0.55,0.960,1]]],
-  [5.5, 0.60, [[0.90,0.651,1],[0.80,0.782,1],[0.70,0.878,1],[0.60,0.940,1],[0.55,0.960,1]]],
-  [5.5, 0.50, [[0.90,0.651,1],[0.80,0.782,1],[0.70,0.878,1],[0.60,0.940,1],[0.55,0.960,1]]],
-  [5.5, 0.40, [[0.90,0.651,1],[0.80,0.782,1],[0.70,0.878,1],[0.60,0.940,1],[0.55,0.960,1]]],
-  [5.5, 0.30, [[0.90,0.651,1],[0.80,0.782,1],[0.70,0.878,1],[0.60,0.940,1],[0.55,0.960,1]]],
-];
-
-// TABLE A2 (2 decision concentrations, alpha=0.025 each)
-const TABLE_A2 = [
-  [1.0, 1.00, [[0.90,0.601,13],[0.80,0.714,16],[0.70,0.835,21],[0.60,0.933,28],[0.55,0.968,34]]],
-  [1.5, 1.00, [[0.90,0.602,6],[0.80,0.713,7],[0.70,0.843,10],[0.60,0.937,13],[0.55,0.968,15]]],
-  [1.5, 0.95, [[0.90,0.599,11],[0.80,0.713,20],[0.70,0.832,74]]],
-  [2.0, 1.00, [[0.90,0.611,4],[0.80,0.714,4],[0.70,0.851,6],[0.60,0.933,7],[0.55,0.972,9]]],
-  [2.0, 0.95, [[0.90,0.606,5],[0.80,0.715,6],[0.70,0.836,10],[0.60,0.933,20],[0.55,0.967,40]]],
-  [2.0, 0.90, [[0.90,0.601,7],[0.80,0.713,13],[0.70,0.832,160]]],
-  [2.0, 0.85, [[0.90,0.599,17]]],
-  [2.5, 1.00, [[0.90,0.599,2],[0.80,0.730,3],[0.70,0.856,4],[0.60,0.943,5],[0.55,0.974,6]]],
-  [2.5, 0.95, [[0.90,0.610,3],[0.80,0.733,4],[0.70,0.843,5],[0.60,0.938,8],[0.55,0.967,10]]],
-  [2.5, 0.90, [[0.90,0.603,3],[0.80,0.714,4],[0.70,0.837,8],[0.60,0.933,24]]],
-  [2.5, 0.85, [[0.90,0.603,4],[0.80,0.712,6],[0.70,0.832,27]]],
-  [2.5, 0.80, [[0.90,0.600,5],[0.80,0.712,17]]],
-  [2.5, 0.75, [[0.90,0.599,9]]],
-  [3.0, 1.00, [[0.90,0.618,2],[0.80,0.726,2],[0.70,0.865,3],[0.60,0.955,4],[0.55,0.972,4]]],
-  [3.0, 0.95, [[0.90,0.613,2],[0.80,0.717,2],[0.70,0.843,3],[0.60,0.946,5],[0.55,0.972,6]]],
-  [3.0, 0.90, [[0.90,0.608,2],[0.80,0.734,3],[0.70,0.845,4],[0.60,0.938,7],[0.55,0.968,11]]],
-  [3.0, 0.85, [[0.90,0.605,2],[0.80,0.722,3],[0.70,0.836,5],[0.60,0.933,17]]],
-  [3.0, 0.80, [[0.90,0.602,2],[0.80,0.722,4],[0.70,0.834,9]]],
-  [3.0, 0.75, [[0.90,0.599,2],[0.80,0.716,5],[0.70,0.832,401]]],
-  [3.0, 0.70, [[0.90,0.602,3],[0.80,0.713,8]]],
-  [3.0, 0.60, [[0.90,0.599,5]]],
-  [3.5, 1.00, [[0.90,0.637,2],[0.80,0.758,2],[0.70,0.853,2],[0.60,0.957,3],[0.55,0.973,3]]],
-  [3.5, 0.95, [[0.90,0.631,2],[0.80,0.748,2],[0.70,0.842,2],[0.60,0.942,3],[0.55,0.975,4]]],
-  [3.5, 0.90, [[0.90,0.626,2],[0.80,0.739,2],[0.70,0.832,2],[0.60,0.943,4],[0.55,0.970,5]]],
-  [3.5, 0.85, [[0.90,0.622,2],[0.80,0.732,2],[0.70,0.849,3],[0.60,0.936,5],[0.55,0.967,8]]],
-  [3.5, 0.80, [[0.90,0.618,2],[0.80,0.726,2],[0.70,0.837,3],[0.60,0.934,9],[0.55,0.967,73]]],
-  [3.5, 0.75, [[0.90,0.615,2],[0.80,0.720,2],[0.70,0.836,4],[0.60,0.932,401]]],
-  [3.5, 0.70, [[0.90,0.615,2],[0.80,0.716,2],[0.70,0.833,6]]],
-  [3.5, 0.60, [[0.90,0.608,2],[0.80,0.715,3]]],
-  [3.5, 0.50, [[0.90,0.604,2],[0.80,0.713,9]]],
-  [3.5, 0.40, [[0.90,0.602,2]]],
-  [3.5, 0.30, [[0.90,0.600,2]]],
-  [4.0, 1.00, [[0.90,0.611,1],[0.80,0.714,1],[0.70,0.855,2],[0.60,0.945,2],[0.55,0.986,3]]],
-  [4.0, 0.95, [[0.90,0.611,1],[0.80,0.714,1],[0.70,0.874,2],[0.60,0.937,2],[0.55,0.978,3]]],
-  [4.0, 0.90, [[0.90,0.611,1],[0.80,0.714,1],[0.70,0.864,2],[0.60,0.952,3],[0.55,0.970,3]]],
-  [4.0, 0.85, [[0.90,0.611,1],[0.80,0.714,1],[0.70,0.856,2],[0.60,0.942,3],[0.55,0.970,4]]],
-  [4.0, 0.80, [[0.90,0.611,1],[0.80,0.714,1],[0.70,0.848,2],[0.60,0.942,4],[0.55,0.969,6]]],
-  [4.0, 0.75, [[0.90,0.611,1],[0.80,0.714,1],[0.70,0.842,2],[0.60,0.936,5],[0.55,0.967,13]]],
-  [4.0, 0.70, [[0.90,0.611,1],[0.80,0.714,1],[0.70,0.836,2],[0.60,0.933,8]]],
-  [4.0, 0.60, [[0.90,0.611,1],[0.80,0.714,1],[0.70,0.835,3]]],
-  [4.0, 0.50, [[0.90,0.611,1],[0.80,0.714,1],[0.70,0.832,9]]],
-  [4.0, 0.40, [[0.90,0.611,1],[0.80,0.714,1]]],
-  [4.0, 0.30, [[0.90,0.611,1],[0.80,0.714,1]]],
-  [4.5, 1.00, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.911,2],[0.60,0.964,2],[0.55,0.979,2]]],
-  [4.5, 0.95, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.901,2],[0.60,0.957,2],[0.55,0.973,2]]],
-  [4.5, 0.90, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.892,2],[0.60,0.951,2],[0.55,0.968,2]]],
-  [4.5, 0.85, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.844,2],[0.60,0.944,2],[0.55,0.977,3]]],
-  [4.5, 0.80, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.876,2],[0.60,0.939,2],[0.55,0.971,4]]],
-  [4.5, 0.75, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.870,2],[0.60,0.933,2],[0.55,0.970,4]]],
-  [4.5, 0.70, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.864,2],[0.60,0.940,3],[0.55,0.967,5]]],
-  [4.5, 0.60, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.854,2],[0.60,0.934,5]]],
-  [4.5, 0.50, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.846,2]]],
-  [4.5, 0.40, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.840,2]]],
-  [4.5, 0.30, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.836,2]]],
-  [5.0, 1.00, [[0.90,0.638,1],[0.80,0.760,1],[0.70,0.856,1],[0.60,0.977,2],[0.55,0.988,2]]],
-  [5.0, 0.95, [[0.90,0.638,1],[0.80,0.760,1],[0.70,0.856,1],[0.60,0.972,2],[0.55,0.984,2]]],
-  [5.0, 0.90, [[0.90,0.638,1],[0.80,0.760,1],[0.70,0.856,1],[0.60,0.967,2],[0.55,0.980,2]]],
-  [5.0, 0.85, [[0.90,0.638,1],[0.80,0.760,1],[0.70,0.856,1],[0.60,0.962,2],[0.55,0.977,2]]],
-  [5.0, 0.80, [[0.90,0.638,1],[0.80,0.760,1],[0.70,0.856,1],[0.60,0.957,2],[0.55,0.973,2]]],
-  [5.0, 0.75, [[0.90,0.638,1],[0.80,0.760,1],[0.70,0.856,1],[0.60,0.952,2],[0.55,0.970,2]]],
-  [5.0, 0.70, [[0.90,0.638,1],[0.80,0.760,1],[0.70,0.856,1],[0.60,0.948,2],[0.55,0.974,3]]],
-  [5.0, 0.60, [[0.90,0.638,1],[0.80,0.760,1],[0.70,0.856,1],[0.60,0.941,2],[0.55,0.969,4]]],
-  [5.0, 0.50, [[0.90,0.638,1],[0.80,0.760,1],[0.70,0.856,1],[0.60,0.935,2],[0.55,0.967,95]]],
-  [5.0, 0.40, [[0.90,0.638,1],[0.80,0.760,1],[0.70,0.856,1],[0.60,0.933,3]]],
-  [5.5, 1.00, [[0.90,0.651,1],[0.80,0.782,1],[0.70,0.878,1],[0.60,0.940,1],[0.55,0.933,2]]],
-  [5.5, 0.95, [[0.90,0.651,1],[0.80,0.782,1],[0.70,0.878,1],[0.60,0.940,1],[0.55,0.991,2]]],
-  [5.5, 0.90, [[0.90,0.651,1],[0.80,0.782,1],[0.70,0.878,1],[0.60,0.940,1],[0.55,0.988,2]]],
-  [5.5, 0.85, [[0.90,0.651,1],[0.80,0.782,1],[0.70,0.878,1],[0.60,0.940,1],[0.55,0.986,2]]],
-  [5.5, 0.80, [[0.90,0.651,1],[0.80,0.782,1],[0.70,0.878,1],[0.60,0.940,1],[0.55,0.983,2]]],
-  [5.5, 0.70, [[0.90,0.651,1],[0.80,0.782,1],[0.70,0.878,1],[0.60,0.940,1],[0.55,0.978,2]]],
-  [5.5, 0.60, [[0.90,0.651,1],[0.80,0.782,1],[0.70,0.878,1],[0.60,0.940,1],[0.55,0.973,2]]],
-  [5.5, 0.50, [[0.90,0.651,1],[0.80,0.782,1],[0.70,0.878,1],[0.60,0.940,1],[0.55,0.969,2]]],
-  [5.5, 0.40, [[0.90,0.651,1],[0.80,0.782,1],[0.70,0.878,1],[0.60,0.940,1],[0.55,0.968,3]]],
-  [6.0, 1.00, [[0.90,0.664,1],[0.80,0.802,1],[0.70,0.898,1],[0.60,0.955,1],[0.55,0.972,1]]],
-  [6.0, 0.95, [[0.90,0.664,1],[0.80,0.802,1],[0.70,0.898,1],[0.60,0.955,1],[0.55,0.972,1]]],
-  [6.0, 0.90, [[0.90,0.664,1],[0.80,0.802,1],[0.70,0.898,1],[0.60,0.955,1],[0.55,0.972,1]]],
-];
-
-// TABLE A3 (3 decision concentrations, alpha=0.0167 each) — representative entries
-const TABLE_A3 = [
-  [1.0, 1.00, [[0.90,0.605,16],[0.80,0.721,20],[0.70,0.843,27],[0.60,0.938,36],[0.55,0.967,43]]],
-  [1.5, 1.00, [[0.90,0.605,7],[0.80,0.716,9],[0.70,0.839,12],[0.60,0.940,17],[0.55,0.967,20]]],
-  [1.5, 0.95, [[0.90,0.601,13],[0.80,0.716,25],[0.70,0.838,160]]],
-  [2.0, 1.00, [[0.90,0.611,4],[0.80,0.714,5],[0.70,0.855,7],[0.60,0.945,9],[0.55,0.974,11]]],
-  [2.0, 0.95, [[0.90,0.607,6],[0.80,0.715,7],[0.70,0.840,13],[0.60,0.937,27],[0.55,0.968,53]]],
-  [2.0, 0.90, [[0.90,0.602,9],[0.80,0.713,17]]],
-  [2.5, 1.00, [[0.90,0.611,3],[0.80,0.730,3],[0.70,0.856,4],[0.60,0.943,6],[0.55,0.975,7]]],
-  [2.5, 0.95, [[0.90,0.611,3],[0.80,0.734,4],[0.70,0.843,6],[0.60,0.938,10],[0.55,0.967,13]]],
-  [2.5, 0.90, [[0.90,0.604,4],[0.80,0.715,5],[0.70,0.838,10],[0.60,0.933,32]]],
-  [2.5, 0.85, [[0.90,0.603,5],[0.80,0.712,8],[0.70,0.832,41]]],
-  [2.5, 0.80, [[0.90,0.600,6],[0.80,0.712,22]]],
-  [3.0, 1.00, [[0.90,0.618,2],[0.80,0.726,2],[0.70,0.865,3],[0.60,0.955,4],[0.55,0.974,5]]],
-  [3.0, 0.95, [[0.90,0.613,2],[0.80,0.726,3],[0.70,0.845,4],[0.60,0.946,6],[0.55,0.972,7]]],
-  [3.0, 0.90, [[0.90,0.608,2],[0.80,0.726,3],[0.70,0.848,5],[0.60,0.940,9],[0.55,0.968,14]]],
-  [3.0, 0.85, [[0.90,0.605,2],[0.80,0.722,4],[0.70,0.838,7],[0.60,0.934,23]]],
-  [3.0, 0.80, [[0.90,0.602,3],[0.80,0.716,5],[0.70,0.835,13]]],
-  [3.0, 0.75, [[0.90,0.600,3],[0.80,0.716,9]]],
-  [3.0, 0.70, [[0.90,0.602,4],[0.80,0.713,13]]],
-  [3.5, 1.00, [[0.90,0.637,2],[0.80,0.758,2],[0.70,0.853,2],[0.60,0.957,3],[0.55,0.975,4]]],
-  [3.5, 0.95, [[0.90,0.631,2],[0.80,0.748,2],[0.70,0.843,3],[0.60,0.943,4],[0.55,0.975,5]]],
-  [3.5, 0.90, [[0.90,0.626,2],[0.80,0.739,2],[0.70,0.838,3],[0.60,0.943,5],[0.55,0.970,7]]],
-  [3.5, 0.85, [[0.90,0.622,2],[0.80,0.732,2],[0.70,0.849,4],[0.60,0.937,7],[0.55,0.969,11]]],
-  [3.5, 0.80, [[0.90,0.618,2],[0.80,0.726,2],[0.70,0.837,4],[0.60,0.936,12]]],
-  [3.5, 0.75, [[0.90,0.615,2],[0.80,0.720,2],[0.70,0.836,5]]],
-  [3.5, 0.70, [[0.90,0.615,2],[0.80,0.716,3],[0.70,0.835,9]]],
-  [3.5, 0.60, [[0.90,0.609,2],[0.80,0.715,4]]],
-  [3.5, 0.50, [[0.90,0.604,2],[0.80,0.713,12]]],
-  [4.0, 1.00, [[0.90,0.611,1],[0.80,0.714,1],[0.70,0.855,2],[0.60,0.945,2],[0.55,0.986,3]]],
-  [4.0, 0.95, [[0.90,0.611,1],[0.80,0.714,1],[0.70,0.864,2],[0.60,0.938,3],[0.55,0.979,3]]],
-  [4.0, 0.90, [[0.90,0.611,1],[0.80,0.714,1],[0.70,0.857,2],[0.60,0.945,3],[0.55,0.971,4]]],
-  [4.0, 0.85, [[0.90,0.611,1],[0.80,0.714,1],[0.70,0.856,2],[0.60,0.943,4],[0.55,0.970,5]]],
-  [4.0, 0.80, [[0.90,0.611,1],[0.80,0.714,1],[0.70,0.850,2],[0.60,0.940,5],[0.55,0.969,7]]],
-  [4.0, 0.75, [[0.90,0.611,1],[0.80,0.714,1],[0.70,0.843,2],[0.60,0.937,7]]],
-  [4.0, 0.70, [[0.90,0.611,1],[0.80,0.714,1],[0.70,0.837,2],[0.60,0.935,11]]],
-  [4.0, 0.60, [[0.90,0.611,1],[0.80,0.714,1],[0.70,0.835,3]]],
-  [4.5, 1.00, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.911,2],[0.60,0.964,2],[0.55,0.979,2]]],
-  [4.5, 0.95, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.901,2],[0.60,0.958,2],[0.55,0.974,2]]],
-  [4.5, 0.90, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.893,2],[0.60,0.952,2],[0.55,0.969,2]]],
-  [4.5, 0.85, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.878,2],[0.60,0.945,2],[0.55,0.969,3]]],
-  [4.5, 0.80, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.878,2],[0.60,0.939,3],[0.55,0.968,4]]],
-  [4.5, 0.75, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.870,2],[0.60,0.933,3],[0.55,0.967,5]]],
-  [4.5, 0.70, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.864,2],[0.60,0.940,4],[0.55,0.967,7]]],
-  [4.5, 0.60, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.854,2],[0.60,0.934,7]]],
-  [4.5, 0.40, [[0.90,0.625,1],[0.80,0.738,1],[0.70,0.848,7]]],
-  [5.0, 1.00, [[0.90,0.638,1],[0.80,0.760,1],[0.70,0.856,1],[0.60,0.977,2],[0.55,0.988,2]]],
-  [5.0, 0.95, [[0.90,0.638,1],[0.80,0.760,1],[0.70,0.856,1],[0.60,0.972,2],[0.55,0.984,2]]],
-  [5.0, 0.90, [[0.90,0.638,1],[0.80,0.760,1],[0.70,0.856,1],[0.60,0.967,2],[0.55,0.980,2]]],
-  [5.0, 0.85, [[0.90,0.638,1],[0.80,0.760,1],[0.70,0.856,1],[0.60,0.962,2],[0.55,0.977,2]]],
-  [5.0, 0.80, [[0.90,0.638,1],[0.80,0.760,1],[0.70,0.856,1],[0.60,0.957,2],[0.55,0.982,3]]],
-  [5.0, 0.75, [[0.90,0.638,1],[0.80,0.760,1],[0.70,0.856,1],[0.60,0.952,2],[0.55,0.978,3]]],
-  [5.0, 0.70, [[0.90,0.638,1],[0.80,0.760,1],[0.70,0.856,1],[0.60,0.948,2],[0.55,0.977,4]]],
-  [5.0, 0.60, [[0.90,0.638,1],[0.80,0.760,1],[0.70,0.856,1],[0.60,0.948,3],[0.55,0.975,19]]],
-  [5.0, 0.50, [[0.90,0.638,1],[0.80,0.760,1],[0.70,0.856,1],[0.60,0.945,8]]],
-  [5.5, 1.00, [[0.90,0.651,1],[0.80,0.782,1],[0.70,0.878,1],[0.60,0.986,2],[0.55,0.993,2]]],
-  [5.5, 0.90, [[0.90,0.651,1],[0.80,0.782,1],[0.70,0.878,1],[0.60,0.940,1],[0.55,0.988,2]]],
-  [5.5, 0.80, [[0.90,0.651,1],[0.80,0.782,1],[0.70,0.878,1],[0.60,0.940,1],[0.55,0.983,2]]],
-];
-
-// ============================================================
-// TABLE LOOKUP FUNCTION
-// ============================================================
-function lookupTable(table, cdSwrl, srSwrl, powerGoal) {
-  // Find closest row where cdSwrl_row <= cdSwrl and srSwrl_row <= srSwrl
-  const validRows = table.filter(r => r[0] <= cdSwrl && r[1] <= srSwrl);
-  if (validRows.length === 0) {
-    // Try closest by CD/SWRL only
-    const byCD = table.filter(r => r[0] <= cdSwrl);
-    if (byCD.length === 0) return null;
-    const best = byCD.reduce((a, b) => (a[0] > b[0] || (a[0] === b[0] && a[1] > b[1])) ? a : b);
-    return findBestRL(best[2], powerGoal);
-  }
-  // Pick the row with highest CD/SWRL and highest Sr/SWRL
-  const best = validRows.reduce((a, b) => {
-    if (a[0] > b[0]) return a;
-    if (a[0] === b[0] && a[1] > b[1]) return a;
-    return b;
-  });
-  return findBestRL(best[2], powerGoal);
-}
-
-function findBestRL(rlEntries, powerGoal) {
-  // Find smallest k (tightest RL) where power >= powerGoal
-  // rlEntries: [[k, power, N], ...]
-  const sorted = [...rlEntries].sort((a, b) => a[0] - b[0]); // tightest first
-  for (const [k, power, N] of sorted) {
-    if (power >= powerGoal) return { k, power, N };
-  }
-  // If none meets goal, return the one with highest power
-  const best = rlEntries.reduce((a, b) => b[1] > a[1] ? b : a);
-  return { k: best[0], power: best[1], N: best[2] };
-}
-
-function selectTable(numLevels) {
-  if (numLevels === 1) return { table: TABLE_A1, name: 'A1' };
-  if (numLevels === 2) return { table: TABLE_A2, name: 'A2' };
-  return { table: TABLE_A3, name: 'A3' };
-}
-
-// ============================================================
-// TAB 1 - SETUP
-// ============================================================
-let rowCounter = 0;
-
-function addAnalyteRow(data = {}) {
-  rowCounter++;
-  const tbody = document.getElementById('setupTableBody');
-  const tr = document.createElement('tr');
-  tr.dataset.rowId = rowCounter;
-  tr.innerHTML = `
-    <td>${rowCounter}</td>
-    <td><input type="text" style="width:110px" placeholder="e.g. Glucose" value="${data.analyte||''}"></td>
-    <td><input type="text" style="width:90px" placeholder="e.g. Low" value="${data.level||''}"></td>
-    <td><input type="number" style="width:80px" step="any" placeholder="e.g. 5.5" value="${data.conc||''}"></td>
-    <td><input type="text" style="width:60px" placeholder="mmol/L" value="${data.unit||''}"></td>
-    <td><input type="number" style="width:70px" step="any" placeholder="CD" value="${data.cd||''}" title="Critical Difference (same units as SWRL)"></td>
-    <td><input type="number" style="width:70px" step="any" placeholder="SWRL" value="${data.swrl||''}" title="Within-Reagent-Lot imprecision SD"></td>
-    <td><input type="number" style="width:70px" step="any" placeholder="Sr" value="${data.sr||''}" title="Repeatability (within-run SD)"></td>
-    <td>
-      <select style="width:60px">
-        <option value="1" ${data.levels==1?'selected':''}>1</option>
-        <option value="2" ${data.levels==2?'selected':''}>2</option>
-        <option value="3" ${data.levels==3?'selected':''}>3</option>
-      </select>
-    </td>
-    <td>
-      <select style="width:70px">
-        <option value="0.80" ${data.power==0.80?'selected':''}>0.80</option>
-        <option value="0.85" ${data.power==0.85?'selected':''}>0.85</option>
-        <option value="0.90" ${(!data.power||data.power==0.90)?'selected':''}>0.90</option>
-        <option value="0.95" ${data.power==0.95?'selected':''}>0.95</option>
-      </select>
-    </td>
-    <td><button class="btn btn-sm btn-danger" onclick="removeRow(this)">✕</button></td>
-  `;
-  tbody.appendChild(tr);
-  document.getElementById('setupEmpty').style.display = 'none';
-}
-
-function removeRow(btn) {
-  btn.closest('tr').remove();
-  if (document.getElementById('setupTableBody').children.length === 0) {
-    document.getElementById('setupEmpty').style.display = 'block';
-  }
-}
-
-function clearSetupTable() {
-  document.getElementById('setupTableBody').innerHTML = '';
-  document.getElementById('setupEmpty').style.display = 'block';
-  rowCounter = 0;
-}
-
-function getSetupRows() {
-  const rows = [];
-  document.getElementById('setupTableBody').querySelectorAll('tr').forEach(tr => {
-    const inputs = tr.querySelectorAll('input, select');
-    rows.push({
-      analyte: inputs[0].value.trim(),
-      level: inputs[1].value.trim(),
-      conc: parseFloat(inputs[2].value),
-      unit: inputs[3].value.trim(),
-      cd: parseFloat(inputs[4].value),
-      swrl: parseFloat(inputs[5].value),
-      sr: parseFloat(inputs[6].value),
-      levels: parseInt(inputs[7].value),
-      power: parseFloat(inputs[8].value),
-    });
-  });
-  return rows;
-}
-
-function calculateParameters() {
-  const rows = getSetupRows();
-  if (rows.length === 0) { alert('Please add analyte data first.'); return; }
-
-  checklistData = [];
-  const tbody = document.getElementById('checklistBody');
-  tbody.innerHTML = '';
-
-  rows.forEach(r => {
-    if (!r.analyte || isNaN(r.cd) || isNaN(r.swrl) || isNaN(r.sr)) {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td colspan="12" style="color:var(--danger)">⚠ Row with analyte "${r.analyte||'?'}" has missing/invalid data — skipped.</td>`;
-      tbody.appendChild(tr);
-      return;
-    }
-    const cdSwrl = r.cd / r.swrl;
-    const srSwrl = r.sr / r.swrl;
-    const { table, name } = selectTable(r.levels);
-    const result = lookupTable(table, cdSwrl, srSwrl, r.power);
-
-    let resultStr, N, k, power, rlValue;
-    if (!result) {
-      resultStr = 'Not in table — increase CD';
-      N = '—'; k = '—'; power = '—'; rlValue = '—';
-    } else {
-      N = result.N;
-      k = result.k;
-      power = result.power.toFixed(3);
-      rlValue = (result.k * r.cd).toFixed(4);
-    }
-
-    const entry = {
-      analyte: r.analyte, level: r.level, conc: r.conc, unit: r.unit,
-      cd: r.cd, cdSwrl: cdSwrl.toFixed(2), srSwrl: srSwrl.toFixed(2),
-      tableUsed: name, N, k, rlValue, power, swrl: r.swrl
-    };
-    checklistData.push(entry);
-
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><strong>${r.analyte}</strong></td>
-      <td>${r.level}</td>
-      <td>${isNaN(r.conc)?'—':r.conc} ${r.unit}</td>
-      <td>${r.unit}</td>
-      <td>${r.cd}</td>
-      <td>${cdSwrl.toFixed(2)}</td>
-      <td>${srSwrl.toFixed(2)}</td>
-      <td><span class="badge badge-info">Table ${name}</span></td>
-      <td><strong>${N}</strong></td>
-      <td>${k === '—' ? '—' : k + ' × CD'}</td>
-      <td>${rlValue}</td>
-      <td>${power}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  document.getElementById('checklistOutput').style.display = 'block';
-  document.getElementById('checklistEmpty').style.display = 'none';
-}
-
-function downloadSetupTemplate() {
-  const csv = `Analyte,Level_Label,Target_Concentration,Units,CD,SWRL,Sr,Num_Levels,Power_Goal
-Glucose,Low,3.5,mmol/L,0.5,0.10,0.07,2,0.90
-Glucose,High,18.0,mmol/L,1.5,0.30,0.22,2,0.90
-AST,Level1,40,IU/L,5.2,1.3,0.81,2,0.80
-TSH,Low,0.5,mIU/L,0.080,0.018,0.013,2,0.80
-`;
-  downloadFile(csv, 'EP26_Setup_Template.csv', 'text/csv');
-}
-
-function importSetupCSV(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    const lines = e.target.result.split('\n').filter(l => l.trim());
-    lines.shift(); // header
-    clearSetupTable();
-    lines.forEach(line => {
-      const cols = line.split(',');
-      if (cols.length < 9) return;
-      addAnalyteRow({
-        analyte: cols[0]?.trim(),
-        level: cols[1]?.trim(),
-        conc: cols[2]?.trim(),
-        unit: cols[3]?.trim(),
-        cd: parseFloat(cols[4]),
-        swrl: parseFloat(cols[5]),
-        sr: parseFloat(cols[6]),
-        levels: parseInt(cols[7]),
-        power: parseFloat(cols[8])
-      });
-    });
-  };
-  reader.readAsText(file);
-  event.target.value = '';
-}
-
-function downloadChecklist() {
-  if (checklistData.length === 0) { alert('Calculate parameters first.'); return; }
-  let csv = 'Analyte,Level,Target_Conc,Units,CD,CD_SWRL,Sr_SWRL,Table_Used,N_Samples,RL_Factor,RL_Value,Power_Achieved\n';
-  checklistData.forEach(r => {
-    csv += `${r.analyte},${r.level},${r.conc},${r.unit},${r.cd},${r.cdSwrl},${r.srSwrl},${r.tableUsed},${r.N},${r.k},${r.rlValue},${r.power}\n`;
-  });
-  downloadFile(csv, 'EP26_Checklist.csv', 'text/csv');
-}
-
-function printChecklist() { window.print(); }
-
-// ============================================================
-// TAB 2 - EVALUATION
-// ============================================================
-function loadFromTab1() {
-  if (checklistData.length === 0) {
-    alert('No checklist data available. Please complete Tab 1 Setup and Calculate Parameters first.');
-    return;
-  }
-  protocolData = checklistData.map(r => ({ ...r }));
-  renderProtocolSummary();
-  renderDataEntry();
-}
-
-function importEvalProtocol(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    const lines = e.target.result.split('\n').filter(l => l.trim());
-    lines.shift();
-    protocolData = lines.map(line => {
-      const cols = line.split(',');
-      return {
-        analyte: cols[0]?.trim(), level: cols[1]?.trim(),
-        conc: parseFloat(cols[2]), unit: cols[3]?.trim(),
-        cd: parseFloat(cols[4]), cdSwrl: cols[5]?.trim(), srSwrl: cols[6]?.trim(),
-        tableUsed: cols[7]?.trim(), N: cols[8]?.trim(),
-        k: cols[9]?.trim(), rlValue: cols[10]?.trim(), power: cols[11]?.trim()
-      };
-    }).filter(r => r.analyte);
-    renderProtocolSummary();
-    renderDataEntry();
-  };
-  reader.readAsText(file);
-  event.target.value = '';
-}
-
-function renderProtocolSummary() {
-  const tbody = document.getElementById('protocolBody');
-  tbody.innerHTML = '';
-  protocolData.forEach(r => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><strong>${r.analyte}</strong></td>
-      <td>${r.level}</td>
-      <td>${r.conc} ${r.unit}</td>
-      <td>${r.unit}</td>
-      <td><strong>${r.N}</strong></td>
-      <td>${r.k} × CD</td>
-      <td>${r.rlValue}</td>
-      <td>${r.power}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-  document.getElementById('protocolSummary').style.display = 'block';
-  document.getElementById('protocolEmpty').style.display = 'none';
-}
-
-function renderDataEntry() {
-  evalDataEntries = {};
-  const container = document.getElementById('dataEntryContainer');
-  container.innerHTML = '';
-
-  protocolData.forEach((row, idx) => {
-    const key = `${row.analyte}_${row.level}_${idx}`;
-    const n = parseInt(row.N) || 3;
-    evalDataEntries[key] = { row, samples: n };
-
-    const div = document.createElement('div');
-    div.className = 'section-card';
-    div.style.marginBottom = '16px';
-
-    let sampleRows = '';
-    for (let i = 1; i <= Math.max(n, 3); i++) {
-      sampleRows += `
-        <tr>
-          <td style="font-weight:600; color:var(--muted)">Sample ${i}</td>
-          <td><input type="number" step="any" class="current-val" data-key="${key}" data-idx="${i-1}" placeholder="Current lot" style="width:120px; padding:6px; border:1.5px solid var(--border); border-radius:5px;"></td>
-          <td><input type="number" step="any" class="candidate-val" data-key="${key}" data-idx="${i-1}" placeholder="Candidate lot" style="width:120px; padding:6px; border:1.5px solid var(--border); border-radius:5px;"></td>
-          <td class="diff-cell-${key}-${i-1}" style="color:var(--muted); min-width:80px;">—</td>
-        </tr>`;
-    }
-
-    div.innerHTML = `
-      <div class="section-title" style="border-bottom-color:#e8eef7">
-        🧬 <strong>${row.analyte}</strong> — Level: ${row.level} 
-        (Target: ${row.conc} ${row.unit} | Required N: <strong>${n}</strong> | RL: ${row.k} × CD = <strong>${row.rlValue}</strong>)
-      </div>
-      <div class="info-box" style="font-size:0.8rem; margin-bottom:12px;">
-        CD = ${row.cd} | Rejection Limit = ${row.rlValue} ${row.unit} | Accept if |Mean Difference| &lt; RL
-      </div>
-      <div class="scrollable">
-        <table class="data-table" style="max-width:600px">
-          <thead>
-            <tr>
-              <th>Sample</th>
-              <th>Current Lot Result</th>
-              <th>Candidate Lot Result</th>
-              <th>Difference (Cand−Curr)</th>
-            </tr>
-          </thead>
-          <tbody id="samples_${key}">${sampleRows}</tbody>
-        </table>
-      </div>
-      <button class="btn btn-outline btn-sm" style="margin-top:10px" onclick="addSampleRow('${key}')">+ Add Sample Row</button>
-    `;
-    container.appendChild(div);
-
-    // Live difference calculation
-    div.querySelectorAll('.current-val, .candidate-val').forEach(inp => {
-      inp.addEventListener('input', () => {
-        const k2 = inp.dataset.key;
-        const i = inp.dataset.idx;
-        const currInput = div.querySelector(`.current-val[data-idx="${i}"]`);
-        const candInput = div.querySelector(`.candidate-val[data-idx="${i}"]`);
-        const cell = document.querySelector(`.diff-cell-${k2}-${i}`);
-        if (cell && currInput && candInput) {
-          const c = parseFloat(currInput.value);
-          const ca = parseFloat(candInput.value);
-          if (!isNaN(c) && !isNaN(ca)) {
-            const diff = ca - c;
-            cell.textContent = diff.toFixed(4);
-            cell.style.color = Math.abs(diff) > parseFloat(row.rlValue) ? 'var(--danger)' : 'var(--success)';
-          } else {
-            cell.textContent = '—';
-            cell.style.color = 'var(--muted)';
-          }
+        // Save to localStorage
+        function saveToStorage() {
+            const data = {
+                analyteName: document.getElementById('analyteName').value,
+                unit: document.getElementById('unit').value,
+                distribution: document.getElementById('distribution').value,
+                cvi: document.getElementById('cvi').value,
+                cvg: document.getElementById('cvg').value,
+                cva: document.getElementById('cva').value,
+                referenceValues: referenceValues
+            };
+            localStorage.setItem('bvCalculatorData', JSON.stringify(data));
         }
-      });
-    });
-  });
-}
 
-function addSampleRow(key) {
-  const tbody = document.getElementById('samples_' + key);
-  const rowIndex = tbody.children.length;
-  const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td style="font-weight:600; color:var(--muted)">Sample ${rowIndex + 1}</td>
-    <td><input type="number" step="any" class="current-val" data-key="${key}" data-idx="${rowIndex}" placeholder="Current lot" style="width:120px; padding:6px; border:1.5px solid var(--border); border-radius:5px;"></td>
-    <td><input type="number" step="any" class="candidate-val" data-key="${key}" data-idx="${rowIndex}" placeholder="Candidate lot" style="width:120px; padding:6px; border:1.5px solid var(--border); border-radius:5px;"></td>
-    <td class="diff-cell-${key}-${rowIndex}" style="color:var(--muted); min-width:80px;">—</td>
-  `;
-  tbody.appendChild(tr);
-}
+        // Load from localStorage
+        function loadFromStorage() {
+            const saved = localStorage.getItem('bvCalculatorData');
+            if (saved) {
+                const data = JSON.parse(saved);
+                document.getElementById('analyteName').value = data.analyteName || '';
+                document.getElementById('unit').value = data.unit || '';
+                document.getElementById('distribution').value = data.distribution || 'normal';
+                document.getElementById('cvi').value = data.cvi || '';
+                document.getElementById('cvg').value = data.cvg || '';
+                document.getElementById('cva').value = data.cva || '';
+                referenceValues = data.referenceValues || [];
+            }
+        }
 
-function calculateEvaluation() {
-  if (protocolData.length === 0) { alert('Load protocol data first.'); return; }
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
 
-  const tbody = document.getElementById('resultsBody');
-  tbody.innerHTML = '';
+        // Add value input
+        function addValueInput() {
+            referenceValues.push('');
+            renderValues();
+        }
 
-  let passCount = 0, failCount = 0, totalCount = 0;
-  const fullResults = [];
+        // Render values
+        function renderValues() {
+            const container = document.getElementById('valuesContainer');
+            container.innerHTML = '';
+            
+            if (referenceValues.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666;">No values added yet. Click "+ Add Value" to start.</p>';
+                return;
+            }
 
-  Object.entries(evalDataEntries).forEach(([key, { row }]) => {
-    const currentInputs = document.querySelectorAll(`.current-val[data-key="${key}"]`);
-    const candidateInputs = document.querySelectorAll(`.candidate-val[data-key="${key}"]`);
+            referenceValues.forEach((value, index) => {
+                const row = document.createElement('div');
+                row.className = 'value-input-row';
+                row.innerHTML = `
+                    <input type="number" step="0.01" placeholder="Value ${index + 1}" value="${value}" 
+                           onchange="updateValue(${index}, this.value)">
+                    <button onclick="removeValue(${index})">×</button>
+                `;
+                container.appendChild(row);
+            });
 
-    const diffs = [];
-    currentInputs.forEach((inp, i) => {
-      const c = parseFloat(inp.value);
-      const ca = parseFloat(candidateInputs[i]?.value);
-      if (!isNaN(c) && !isNaN(ca)) diffs.push(ca - c);
-    });
+            saveToStorage();
+        }
 
-    const N = diffs.length;
-    const meanDiff = N > 0 ? diffs.reduce((a, b) => a + b, 0) / N : null;
-    const absMean = meanDiff !== null ? Math.abs(meanDiff) : null;
-    const rl = parseFloat(row.rlValue);
-    const pass = absMean !== null ? absMean < rl : null;
+        // Update value
+        function updateValue(index, value) {
+            referenceValues[index] = value;
+            saveToStorage();
+        }
 
-    totalCount++;
-    if (pass === true) passCount++;
-    else if (pass === false) failCount++;
+        // Remove value
+        function removeValue(index) {
+            referenceValues.splice(index, 1);
+            renderValues();
+        }
 
-    fullResults.push({ ...row, N, meanDiff, absMean, pass });
+        // Clear all values
+        function clearValues() {
+            if (confirm('Are you sure you want to clear all reference values?')) {
+                referenceValues = [];
+                renderValues();
+            }
+        }
 
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><strong>${row.analyte}</strong></td>
-      <td>${row.level}</td>
-      <td>${row.conc} ${row.unit}</td>
-      <td>${N > 0 ? N : '—'}</td>
-      <td>${meanDiff !== null ? meanDiff.toFixed(4) : '—'}</td>
-      <td>${absMean !== null ? absMean.toFixed(4) : '—'}</td>
-      <td>${row.k} × CD</td>
-      <td>${rl}</td>
-      <td>${row.cd}</td>
-      <td>${pass === null ? '<span class="badge badge-pending">No Data</span>' : 
-             pass ? '<span class="badge badge-pass">✓ PASS</span>' : '<span class="badge badge-fail">✗ FAIL</span>'}</td>
-    `;
-    tbody.appendChild(tr);
-  });
+        // Import CSV
+        function importCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
 
-  // Summary banner
-  const grid = document.getElementById('summaryGrid');
-  grid.innerHTML = `
-    <div class="result-item">
-      <div class="label">Total Analyte Levels</div>
-      <div class="value">${totalCount}</div>
-    </div>
-    <div class="result-item">
-      <div class="label">Passed</div>
-      <div class="value pass">${passCount}</div>
-    </div>
-    <div class="result-item">
-      <div class="label">Failed</div>
-      <div class="value fail">${failCount}</div>
-    </div>
-    <div class="result-item">
-      <div class="label">Overall Conclusion</div>
-      <div class="value ${failCount === 0 ? 'pass' : 'fail'}">${failCount === 0 ? 'ACCEPT' : 'REJECT'}</div>
-    </div>
-  `;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const lines = text.split('\n');
+                const values = [];
 
-  document.getElementById('evalResults').style.display = 'block';
-  document.getElementById('evalEmpty').style.display = 'none';
+                lines.forEach(line => {
+                    const cleaned = line.trim().replace(/[^\d.-]/g, '');
+                    const value = parseFloat(cleaned);
+                    if (!isNaN(value) && value !== 0) {
+                        values.push(value.toString());
+                    }
+                });
 
-  window._evalResults = fullResults;
-}
+                if (values.length > 0) {
+                    referenceValues = values;
+                    renderValues();
+                    alert(`Successfully imported ${values.length} values!`);
+                } else {
+                    alert('No valid numeric values found in the file.');
+                }
+            };
+            reader.readAsText(file);
+        }
 
-function downloadEvalTemplate() {
-  if (protocolData.length === 0) { alert('Load protocol data first.'); return; }
-  let csv = 'Analyte,Level,Target_Conc,Units,Required_N,RL_Value,CD,';
-  const maxN = 10;
-  for (let i = 1; i <= maxN; i++) csv += `Current_S${i},Candidate_S${i},`;
-  csv = csv.replace(/,$/, '') + '\n';
-  protocolData.forEach(r => {
-    csv += `${r.analyte},${r.level},${r.conc},${r.unit},${r.N},${r.rlValue},${r.cd},`;
-    for (let i = 1; i <= maxN; i++) csv += `,,`;
-    csv = csv.replace(/,$/, '') + '\n';
-  });
-  downloadFile(csv, 'EP26_Evaluation_Template.csv', 'text/csv');
-}
+        // Calculate
+        function calculate() {
+            const values = referenceValues.map(v => parseFloat(v)).filter(v => !isNaN(v));
+            
+            if (values.length < 6) {
+                alert('Please enter at least 6 reference values (recommended: 16+)');
+                return;
+            }
 
-function downloadResults() {
-  if (!window._evalResults) { alert('Calculate evaluation first.'); return; }
-  let csv = 'Analyte,Level,Target_Conc,Units,N_Tested,Mean_Difference,Abs_Mean_Diff,RL_Value,CD,Conclusion\n';
-  window._evalResults.forEach(r => {
-    csv += `${r.analyte},${r.level},${r.conc},${r.unit},${r.N},`;
-    csv += `${r.meanDiff !== null ? r.meanDiff.toFixed(4) : ''},`;
-    csv += `${r.absMean !== null ? r.absMean.toFixed(4) : ''},`;
-    csv += `${r.rlValue},${r.cd},`;
-    csv += `${r.pass === null ? 'No Data' : r.pass ? 'PASS' : 'FAIL'}\n`;
-  });
-  downloadFile(csv, 'EP26_Evaluation_Results.csv', 'text/csv');
-}
+            const analyteName = document.getElementById('analyteName').value;
+            const unit = document.getElementById('unit').value;
+            const distribution = document.getElementById('distribution').value;
+            const cvi = parseFloat(document.getElementById('cvi').value) / 100;
+            const cvg = parseFloat(document.getElementById('cvg').value) / 100;
+            const cva = parseFloat(document.getElementById('cva').value) / 100;
+            const n = values.length;
 
-function printResults() { window.print(); }
+            let psp, lowerLimit, upperLimit, cvPop, tvPsp;
 
-// ============================================================
-// UTILITY
-// ============================================================
-function downloadFile(content, filename, type) {
-  const blob = new Blob([content], { type });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-</script>
+            const mean = values.reduce((sum, v) => sum + v, 0) / n;
+            const variance = values.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / (n - 1);
+            const stdDev = Math.sqrt(variance);
+            const sorted = [...values].sort((a, b) => a - b);
+            const median = sorted[Math.floor(n / 2)];
+
+            if (distribution === 'normal') {
+                psp = mean;
+                cvPop = Math.sqrt(((n + 1) / n) * (cvi ** 2 + cvg ** 2 + cva ** 2));
+                tvPsp = 1.96 * cvPop;
+                lowerLimit = psp - (psp * tvPsp);
+                upperLimit = psp + (psp * tvPsp);
+            } else {
+                const lnValues = values.map(v => Math.log(v));
+                const mu = lnValues.reduce((sum, v) => sum + v, 0) / n;
+                const lnVariance = lnValues.reduce((sum, v) => sum + (v - mu) ** 2, 0) / (n - 1);
+                
+                psp = Math.exp(mu + 0.5 * lnVariance);
+                const sdStar = Math.sqrt(cvi ** 2 + cvg ** 2 + cva ** 2);
+                
+                lowerLimit = Math.exp(mu + 0.5 * lnVariance - 1.96 * sdStar);
+                upperLimit = Math.exp(mu + 0.5 * lnVariance + 1.96 * sdStar);
+                
+                cvPop = Math.sqrt(((n + 1) / n) * (cvi ** 2 + cvg ** 2 + cva ** 2));
+                tvPsp = 1.96 * cvPop;
+            }
+
+            const minSamples = Math.max(16, Math.ceil(8 * (cvg ** 2 / (0.25 * (cvi ** 2 + cvg ** 2 + cva ** 2)))));
+            const withinInterval = values.filter(v => v >= lowerLimit && v <= upperLimit).length;
+            const coverageRate = (withinInterval / n) * 100;
+
+            calculatedResults = {
+                analyteName,
+                unit,
+                distribution,
+                cvi: (cvi * 100).toFixed(1),
+                cvg: (cvg * 100).toFixed(1),
+                cva: (cva * 100).toFixed(1),
+                psp: psp.toFixed(3),
+                lowerLimit: lowerLimit.toFixed(3),
+                upperLimit: upperLimit.toFixed(3),
+                cvPop: (cvPop * 100).toFixed(2),
+                tvPsp: (tvPsp * 100).toFixed(2),
+                nSamples: n,
+                minSamples: minSamples,
+                range: (upperLimit - lowerLimit).toFixed(3),
+                mean: mean.toFixed(3),
+                median: median.toFixed(3),
+                stdDev: stdDev.toFixed(3),
+                cv: ((stdDev / mean) * 100).toFixed(2),
+                coverageRate: coverageRate.toFixed(1),
+                withinInterval: withinInterval,
+                rawValues: values
+            };
+
+            displayResults();
+            generateReport();
+            
+            // Switch to results tab
+            document.querySelectorAll('.tab')[1].click();
+        }
+
+        // Display results
+        function displayResults() {
+            if (!calculatedResults) return;
+
+            const r = calculatedResults;
+            const validationPassed = r.nSamples >= r.minSamples;
+            const coverageGood = parseFloat(r.coverageRate) >= 85;
+
+            let html = '';
+
+            if (validationPassed) {
+                html += `
+                    <div class="alert alert-success">
+                        <span>✅</span>
+                        <div>
+                            <strong>Validation Passed</strong><br>
+                            Sample size meets requirements (${r.nSamples} ≥ ${r.minSamples})
+                        </div>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="alert alert-warning">
+                        <span>⚠️</span>
+                        <div>
+                            <strong>Sample Size Warning</strong><br>
+                            Current: ${r.nSamples} samples. Recommended: ${r.minSamples}+ samples for optimal reliability.
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += `
+                <div class="result-box">
+                    <div class="result-title">📊 Reference Interval</div>
+                    <div style="text-align: center; padding: 20px; background: white; border-radius: 8px; margin: 15px 0;">
+                        <div style="font-size: 36px; font-weight: 700; color: #667eea; margin-bottom: 10px;">
+                            ${r.lowerLimit} - ${r.upperLimit}
+                        </div>
+                        <div style="font-size: 18px; color: #666;">${r.unit}</div>
+                        <div style="margin-top: 15px; font-size: 14px; color: #888;">
+                            Coverage: ${r.coverageRate}% (${r.withinInterval}/${r.nSamples} values)
+                        </div>
+                    </div>
+                </div>
+
+                <div class="result-box">
+                    <div class="result-title">📈 Key Results</div>
+                    <div class="result-item">
+                        <span class="result-label">Population Set Point (PSP)</span>
+                        <span class="result-value">${r.psp} ${r.unit}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Lower Limit</span>
+                        <span class="result-value">${r.lowerLimit} ${r.unit}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Upper Limit</span>
+                        <span class="result-value">${r.upperLimit} ${r.unit}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Range Width</span>
+                        <span class="result-value">${r.range} ${r.unit}</span>
+                    </div>
+                </div>
+
+                <div class="result-box">
+                    <div class="result-title">🔬 Variation Components</div>
+                    <div class="result-item">
+                        <span class="result-label">Population CV (CV<sub>Pop</sub>)</span>
+                        <span class="result-value">${r.cvPop}%</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Total Variation (TV<sub>PSP</sub>)</span>
+                        <span class="result-value">${r.tvPsp}%</span>
+                    </div>
+                </div>
+
+                <div class="result-box">
+                    <div class="result-title">📊 Descriptive Statistics</div>
+                    <div class="result-item">
+                        <span class="result-label">Mean</span>
+                        <span class="result-value">${r.mean} ${r.unit}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Median</span>
+                        <span class="result-value">${r.median} ${r.unit}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Standard Deviation</span>
+                        <span class="result-value">${r.stdDev} ${r.unit}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Coefficient of Variation</span>
+                        <span class="result-value">${r.cv}%</span>
+                    </div>
+                </div>
+
+                <div class="result-box">
+                    <div class="result-title">✅ Validation Metrics</div>
+                    <div class="result-item">
+                        <span class="result-label">Sample Size (n)</span>
+                        <span class="result-value">${r.nSamples}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Minimum Required</span>
+                        <span class="result-value">${r.minSamples}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Validation Status</span>
+                        <span class="result-value" style="color: ${validationPassed ? '#28a745' : '#ffc107'}">
+                            ${validationPassed ? '✓ PASSED' : '⚠ WARNING'}
+                        </span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Coverage Rate</span>
+                        <span class="result-value" style="color: ${coverageGood ? '#28a745' : '#ffc107'}">
+                            ${r.coverageRate}%
+                        </span>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('resultsContent').innerHTML = html;
+        }
+
+        // Generate report
+        function generateReport() {
+            if (!calculatedResults) return;
+
+            const r = calculatedResults;
+            const timestamp = new Date().toLocaleString();
+
+            let report = `================================================================================
+BV-BASED REFERENCE INTERVAL ANALYSIS REPORT
+================================================================================
+
+Generated: ${timestamp}
+Method: Dr. Abdurrahman Coşkun's BV-Based Population Reference Interval Model
+Reference: Clinical Chemistry 2024;70(10):1279-1290
+
+================================================================================
+
+ANALYTE INFORMATION
+--------------------------------------------------------------------------------
+Analyte Name: ${r.analyteName}
+Unit: ${r.unit}
+Distribution Type: ${r.distribution}
+Number of Reference Individuals: ${r.nSamples}
+
+BIOLOGICAL VARIATION DATA
+--------------------------------------------------------------------------------
+Within-Subject CV (CVI): ${r.cvi}%
+Between-Subject CV (CVG): ${r.cvg}%
+Analytical CV (CVA): ${r.cva}%
+Data Source: EFLM Biological Variation Database
+
+================================================================================
+CALCULATED REFERENCE INTERVALS
+================================================================================
+
+PRIMARY RESULTS
+--------------------------------------------------------------------------------
+Population Set Point (PSP): ${r.psp} ${r.unit}
+Reference Interval: ${r.lowerLimit} - ${r.upperLimit} ${r.unit}
+  Lower Limit: ${r.lowerLimit} ${r.unit}
+  Upper Limit: ${r.upperLimit} ${r.unit}
+Range Width: ${r.range} ${r.unit}
+
+VARIATION COMPONENTS
+--------------------------------------------------------------------------------
+Population CV (CVPop): ${r.cvPop}%
+Total Variation around PSP (TVPsp): ${r.tvPsp}%
+
+DESCRIPTIVE STATISTICS
+--------------------------------------------------------------------------------
+Mean: ${r.mean} ${r.unit}
+Median: ${r.median} ${r.unit}
+Standard Deviation: ${r.stdDev} ${r.unit}
+Coefficient of Variation: ${r.cv}%
+
+VALIDATION METRICS
+--------------------------------------------------------------------------------
+Sample Size (n): ${r.nSamples} individuals
+Minimum Recommended Sample Size: ${r.minSamples} individuals
+Status: ${r.nSamples >= r.minSamples ? 'PASSED ✓' : 'WARNING - Increase sample size'}
+
+COVERAGE ANALYSIS
+--------------------------------------------------------------------------------
+Values Within Interval: ${r.withinInterval} / ${r.nSamples}
+Coverage Rate: ${r.coverageRate}%
+Expected Coverage: 90%
+Status: ${parseFloat(r.coverageRate) >= 85 ? 'ACCEPTABLE ✓' : 'REVIEW RECOMMENDED'}
+
+REFERENCE VALUES
+--------------------------------------------------------------------------------
+`;
+
+            referenceValues.forEach((val, idx) => {
+                if (val) {
+                    const numVal = parseFloat(val);
+                    const isWithin = numVal >= parseFloat(r.lowerLimit) && numVal <= parseFloat(r.upperLimit);
+                    report += `Sample ${String(idx + 1).padStart(3, ' ')}: ${parseFloat(val).toFixed(3).padStart(10, ' ')} ${r.unit} ${isWithin ? '✓' : '✗'}\n`;
+                }
+            });
+
+            report += `
+================================================================================
+METHODOLOGY NOTES
+--------------------------------------------------------------------------------
+1. Reference intervals calculated using biological variation-based approach
+2. Formula for normal distribution:
+   PSP = mean of reference values
+   CVPop = √[(n+1)/n × (CVI² + CVG² + CVA²)]
+   RI = PSP ± (PSP × 1.96 × CVPop)
+
+3. Advantages over conventional methods:
+   - Requires fewer reference individuals (16-30 vs 120+)
+   - Incorporates biological variation principles
+   - More representative of population variation
+
+================================================================================
+© Copyright 2024 Raafat ElShimy. All rights reserved.
+================================================================================
+END OF REPORT
+================================================================================
+`;
+
+            document.getElementById('reportContent').textContent = report;
+        }
+
+        // Export report as TXT
+        function exportReport() {
+            if (!calculatedResults) {
+                alert('Please calculate reference intervals first.');
+                return;
+            }
+
+            const report = document.getElementById('reportContent').textContent;
+            const blob = new Blob([report], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${calculatedResults.analyteName}_BV_Report_${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Export as CSV
+        function exportCSV() {
+            if (!calculatedResults) {
+                alert('Please calculate reference intervals first.');
+                return;
+            }
+
+            const r = calculatedResults;
+            let csv = `BV-Based Reference Interval Report\n`;
+            csv += `Generated,${new Date().toLocaleString()}\n\n`;
+            csv += `Analyte,${r.analyteName}\n`;
+            csv += `Unit,${r.unit}\n`;
+            csv += `Distribution,${r.distribution}\n\n`;
+            csv += `Biological Variation Data\n`;
+            csv += `Within-subject CV (CVI),${r.cvi}%\n`;
+            csv += `Between-subject CV (CVG),${r.cvg}%\n`;
+            csv += `Analytical CV (CVA),${r.cva}%\n\n`;
+            csv += `Results\n`;
+            csv += `Population Set Point (PSP),${r.psp}\n`;
+            csv += `Lower Limit,${r.lowerLimit}\n`;
+            csv += `Upper Limit,${r.upperLimit}\n`;
+            csv += `Reference Interval,"${r.lowerLimit} - ${r.upperLimit}"\n`;
+            csv += `Range,${r.range}\n`;
+            csv += `CVPop,${r.cvPop}%\n`;
+            csv += `TVPsp,${r.tvPsp}%\n`;
+            csv += `Mean,${r.mean}\n`;
+            csv += `Median,${r.median}\n`;
+            csv += `Standard Deviation,${r.stdDev}\n`;
+            csv += `CV,${r.cv}%\n`;
+            csv += `Sample Size,${r.nSamples}\n`;
+            csv += `Minimum Recommended,${r.minSamples}\n`;
+            csv += `Coverage Rate,${r.coverageRate}%\n\n`;
+            csv += `Reference Values\n`;
+            csv += `Sample,Value,Within Interval\n`;
+            
+            referenceValues.forEach((v, i) => {
+                if (v) {
+                    const numVal = parseFloat(v);
+                    const isWithin = numVal >= parseFloat(r.lowerLimit) && numVal <= parseFloat(r.upperLimit);
+                    csv += `${i + 1},${v},${isWithin ? 'Yes' : 'No'}\n`;
+                }
+            });
+
+            csv += `\n© Copyright 2024 Raafat ElShimy\n`;
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${r.analyteName}_BV_Reference_Interval.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Print report
+        function printReport() {
+            if (!calculatedResults) {
+                alert('Please calculate reference intervals first.');
+                return;
+            }
+
+            const printWindow = window.open('', '', 'height=600,width=800');
+            printWindow.document.write('<html><head><title>BV Reference Interval Report</title>');
+            printWindow.document.write('<style>body{font-family:monospace;padding:20px;white-space:pre-wrap;}</style>');
+            printWindow.document.write('</head><body>');
+            printWindow.document.write(document.getElementById('reportContent').textContent);
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        // Load BV data from database
+        function loadBVData(name, cvi, cvg, cva, unit) {
+            document.getElementById('analyteName').value = name;
+            document.getElementById('unit').value = unit;
+            document.getElementById('cvi').value = cvi;
+            document.getElementById('cvg').value = cvg;
+            document.getElementById('cva').value = cva;
+            
+            saveToStorage();
+            
+            // Switch to calculator tab
+            document.querySelectorAll('.tab')[0].click();
+            
+            alert(`Loaded ${name} with BV data. Now add your reference values!`);
+        }
+
+        // Auto-save on input change
+        document.addEventListener('input', function(e) {
+            if (e.target.matches('input, select')) {
+                saveToStorage();
+            }
+        });
+    </script>
 </body>
 </html>
